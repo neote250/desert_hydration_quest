@@ -1,0 +1,140 @@
+[gd_scene format=3 uid="uid://l1lccjofkioa"]
+
+[ext_resource type="Script" uid="uid://cpg2op7521g1b" path="res://ui/menus/shop_interface.gd" id="1_hsx6a"]
+[ext_resource type="Script" uid="uid://bhhulr1bef2xp" path="res://ui/menus/shopkeeper_column.gd" id="2_eo0jy"]
+
+[sub_resource type="CompressedTexture2D" id="CompressedTexture2D_6amws"]
+load_path = "res://.godot/imported/ores-minerals-icons.png-f9f200e844052c7cfe814a42b3927a44.ctex"
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_w6ygw"]
+atlas = SubResource("CompressedTexture2D_6amws")
+region = Rect2(96, 192, 32, 32)
+
+[node name="ShopInterface" type="Control" unique_id=1549214796]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+script = ExtResource("1_hsx6a")
+
+[node name="Dimmer" type="ColorRect" parent="." unique_id=116640176]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0, 0, 0, 0.3137255)
+
+[node name="ShopPanel" type="PanelContainer" parent="." unique_id=209970403]
+custom_minimum_size = Vector2(0, 560)
+layout_mode = 1
+anchors_preset = 12
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = -35.0
+grow_horizontal = 2
+grow_vertical = 0
+
+[node name="MarginContainer" type="MarginContainer" parent="ShopPanel" unique_id=1300945934]
+layout_mode = 2
+theme_override_constants/margin_left = 12
+theme_override_constants/margin_top = 12
+theme_override_constants/margin_right = 12
+theme_override_constants/margin_bottom = 12
+
+[node name="HBoxContainer" type="HBoxContainer" parent="ShopPanel/MarginContainer" unique_id=170360055]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="LeftColumn" type="VBoxContainer" parent="ShopPanel/MarginContainer/HBoxContainer" unique_id=230338256]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_stretch_ratio = 1.3
+
+[node name="Header" type="HBoxContainer" parent="ShopPanel/MarginContainer/HBoxContainer/LeftColumn" unique_id=1333975956]
+layout_mode = 2
+
+[node name="TitleLabel" type="Label" parent="ShopPanel/MarginContainer/HBoxContainer/LeftColumn/Header" unique_id=1279995385]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_stretch_ratio = 0.5
+theme_type_variation = &"HeaderLabel"
+text = "Blacksmith"
+
+[node name="Control" type="Control" parent="ShopPanel/MarginContainer/HBoxContainer/LeftColumn/Header" unique_id=1317602500]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_stretch_ratio = 0.25
+
+[node name="CloseButton" type="Button" parent="ShopPanel/MarginContainer/HBoxContainer/LeftColumn/Header" unique_id=1527231183]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_stretch_ratio = 0.25
+theme_type_variation = &"IconButton"
+text = "X"
+
+[node name="HSeparator" type="HSeparator" parent="ShopPanel/MarginContainer/HBoxContainer/LeftColumn" unique_id=1196894158]
+layout_mode = 2
+
+[node name="ScrollContainer" type="ScrollContainer" parent="ShopPanel/MarginContainer/HBoxContainer/LeftColumn" unique_id=970014657]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="RecipeList" type="VBoxContainer" parent="ShopPanel/MarginContainer/HBoxContainer/LeftColumn/ScrollContainer" unique_id=705546327]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="VSeparator" type="VSeparator" parent="ShopPanel/MarginContainer/HBoxContainer" unique_id=451467842]
+layout_mode = 2
+
+[node name="ShopkeeperColumn" type="VBoxContainer" parent="ShopPanel/MarginContainer/HBoxContainer" unique_id=2050737955]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_stretch_ratio = 0.7
+script = ExtResource("2_eo0jy")
+
+[node name="MarginContainer" type="MarginContainer" parent="ShopPanel/MarginContainer/HBoxContainer/ShopkeeperColumn" unique_id=1071454473]
+layout_mode = 2
+theme_override_constants/margin_left = 12
+theme_override_constants/margin_top = 12
+theme_override_constants/margin_right = 12
+theme_override_constants/margin_bottom = 12
+
+[node name="ChatBubble" type="PanelContainer" parent="ShopPanel/MarginContainer/HBoxContainer/ShopkeeperColumn/MarginContainer" unique_id=174915947]
+layout_mode = 2
+size_flags_stretch_ratio = 0.33
+
+[node name="MarginContainer" type="MarginContainer" parent="ShopPanel/MarginContainer/HBoxContainer/ShopkeeperColumn/MarginContainer/ChatBubble" unique_id=1386903152]
+layout_mode = 2
+theme_override_constants/margin_left = 12
+theme_override_constants/margin_top = 12
+theme_override_constants/margin_right = 12
+theme_override_constants/margin_bottom = 12
+
+[node name="BubbleLabel" type="Label" parent="ShopPanel/MarginContainer/HBoxContainer/ShopkeeperColumn/MarginContainer/ChatBubble/MarginContainer" unique_id=761529245]
+unique_name_in_owner = true
+custom_maximum_size = Vector2(240, 67)
+layout_mode = 2
+theme_type_variation = &"CaptionLabel"
+text = "Hello!"
+horizontal_alignment = 1
+vertical_alignment = 1
+autowrap_mode = 3
+
+[node name="ShopkeeperSprite" type="TextureRect" parent="ShopPanel/MarginContainer/HBoxContainer/ShopkeeperColumn" unique_id=329904035]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_vertical = 3
+size_flags_stretch_ratio = 0.67
+texture = SubResource("AtlasTexture_w6ygw")
+stretch_mode = 5
+
+[connection signal="gui_input" from="Dimmer" to="." method="_on_dimmer_gui_input"]
+[connection signal="pressed" from="ShopPanel/MarginContainer/HBoxContainer/LeftColumn/Header/CloseButton" to="." method="_on_close_button_pressed"]

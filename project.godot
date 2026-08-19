@@ -1,0 +1,70 @@
+; Engine configuration file.
+; It's best edited using the editor UI and not directly,
+; since the parameters that go here are not all obvious.
+;
+; Format:
+;   [section] ; section goes between []
+;   param=value ; assign values to parameters
+
+config_version=5
+
+[application]
+
+config/name="OasisInADesertAdventure"
+run/main_scene="uid://bspkjnokq2t5u"
+config/quit_on_go_back=false
+config/features=PackedStringArray("4.7", "Mobile")
+config/icon="res://icon.svg"
+
+[autoload]
+
+SignalManager="*uid://cnlv2pj81yg61"
+GameManager="*uid://oy4bura7c37"
+NotificationManager="*uid://dn1byjw3e0ri5"
+Ui="*uid://vg630pcv8aof"
+AudioManager="*uid://bhpreqh6usii8"
+LootTables="*uid://c0bduqlpn2ckl"
+ThemeTinter="*uid://b0th6bqcf4bbk"
+
+[display]
+
+window/size/viewport_width=720
+window/size/viewport_height=1280
+window/stretch/mode="canvas_items"
+window/stretch/aspect="expand"
+window/handheld/orientation=1
+
+[editor_plugins]
+
+enabled=PackedStringArray("res://addons/NotificationSchedulerPlugin/plugin.cfg")
+
+[file_customization]
+
+folder_colors={
+"res://assets/": "purple",
+"res://inventory/": "yellow",
+"res://minigames/": "orange",
+"res://resources/": "red",
+"res://screens/": "pink",
+"res://scripts/": "blue",
+"res://ui/": "green"
+}
+
+[gui]
+
+theme/custom="uid://cqqr1un02lm7w"
+
+[input_devices]
+
+pointing/emulate_touch_from_mouse=true
+
+[physics]
+
+3d/physics_engine="Jolt Physics"
+
+[rendering]
+
+textures/canvas_textures/default_texture_filter=0
+rendering_device/driver.windows="d3d12"
+renderer/rendering_method="mobile"
+textures/vram_compression/import_etc2_astc=true

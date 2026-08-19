@@ -1,0 +1,92 @@
+[gd_scene format=3 uid="uid://b6ljk5vcufk5w"]
+
+[ext_resource type="Script" uid="uid://cfjy53thxck6r" path="res://ui/menus/custom_quest_menu.gd" id="1_e34h0"]
+
+[node name="CustomQuestMenu" type="Control" unique_id=993141287]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_e34h0")
+
+[node name="Dimmer" type="ColorRect" parent="." unique_id=1051322799]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0, 0, 0, 0.3137255)
+
+[node name="PanelContainer" type="PanelContainer" parent="." unique_id=124945345]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -61.5
+offset_top = -29.0
+offset_right = 61.5
+offset_bottom = 29.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="MarginContainer" type="MarginContainer" parent="PanelContainer" unique_id=513405229]
+layout_mode = 2
+theme_override_constants/margin_left = 30
+theme_override_constants/margin_top = 45
+theme_override_constants/margin_right = 30
+theme_override_constants/margin_bottom = 45
+
+[node name="VBoxContainer" type="VBoxContainer" parent="PanelContainer/MarginContainer" unique_id=1493886912]
+layout_mode = 2
+size_flags_vertical = 4
+
+[node name="Label" type="Label" parent="PanelContainer/MarginContainer/VBoxContainer" unique_id=1378643623]
+layout_mode = 2
+theme_type_variation = &"HeaderLabel"
+text = "Custom Quest"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="HSeparator" type="HSeparator" parent="PanelContainer/MarginContainer/VBoxContainer" unique_id=1332509241]
+custom_minimum_size = Vector2(0, 10)
+layout_mode = 2
+
+[node name="Control" type="Control" parent="PanelContainer/MarginContainer/VBoxContainer" unique_id=1952014390]
+custom_minimum_size = Vector2(0, 100)
+layout_mode = 2
+
+[node name="HBoxContainer" type="HBoxContainer" parent="PanelContainer/MarginContainer/VBoxContainer" unique_id=1254854591]
+layout_mode = 2
+
+[node name="QuestSpinBox" type="SpinBox" parent="PanelContainer/MarginContainer/VBoxContainer/HBoxContainer" unique_id=1419817902]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 175)
+custom_maximum_size = Vector2(250, -1)
+layout_mode = 2
+theme_override_constants/buttons_width = 100
+min_value = 1.0
+max_value = 10.0
+value = 1.0
+allow_greater = true
+alignment = 1
+custom_arrow_step = 1.0
+
+[node name="Label" type="Label" parent="PanelContainer/MarginContainer/VBoxContainer/HBoxContainer" unique_id=1287807161]
+layout_mode = 2
+text = "# of Bottles"
+
+[node name="Control2" type="Control" parent="PanelContainer/MarginContainer/VBoxContainer" unique_id=1085386822]
+custom_minimum_size = Vector2(0, 100)
+layout_mode = 2
+
+[node name="MedQuestButton" type="Button" parent="PanelContainer/MarginContainer/VBoxContainer" unique_id=1183886650]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Depart"
+
+[connection signal="pressed" from="PanelContainer/MarginContainer/VBoxContainer/MedQuestButton" to="." method="_on_med_quest_button_pressed"]

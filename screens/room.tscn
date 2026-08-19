@@ -1,0 +1,77 @@
+[gd_scene format=3 uid="uid://bttmyiqpgf8fm"]
+
+[ext_resource type="Script" uid="uid://krt67s0cie5r" path="res://screens/room.gd" id="1_2hpka"]
+
+[node name="Main" type="Control" unique_id=1721210330]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+script = ExtResource("1_2hpka")
+
+[node name="RestSpot" type="ColorRect" parent="." unique_id=1337024690]
+layout_mode = 1
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -229.0
+offset_top = -1074.0
+offset_right = -77.0
+offset_bottom = -854.0
+grow_horizontal = 2
+grow_vertical = 0
+tooltip_text = "Rest Spot"
+mouse_filter = 1
+color = Color(0.9392449, 0.89455706, 0.92846185, 1)
+
+[node name="WorkSpot" type="ColorRect" parent="." unique_id=116544583]
+layout_mode = 1
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = 109.0
+offset_top = -1054.0
+offset_right = 261.0
+offset_bottom = -834.0
+grow_horizontal = 2
+grow_vertical = 0
+tooltip_text = "Work Spot"
+mouse_filter = 1
+color = Color(1.2513995e-05, 0.71112955, 0.92750305, 1)
+
+[node name="FunSpot" type="ColorRect" parent="." unique_id=2097736184]
+layout_mode = 1
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = 109.0
+offset_top = -656.0
+offset_right = 261.0
+offset_bottom = -436.0
+grow_horizontal = 2
+grow_vertical = 0
+tooltip_text = "Fun Spot"
+mouse_filter = 1
+color = Color(0.96311563, 0.5048244, 0.2785921, 1)
+
+[node name="Button" type="Button" parent="." unique_id=2127339770]
+layout_mode = 1
+anchors_preset = 2
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_top = -395.0
+offset_right = 275.0
+offset_bottom = -157.0
+grow_vertical = 0
+text = "Stairs"
+
+[connection signal="pressed" from="Button" to="." method="_on_button_pressed"]

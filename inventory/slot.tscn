@@ -1,0 +1,34 @@
+[gd_scene format=3 uid="uid://c2e17xc0y3iyy"]
+
+[ext_resource type="Script" uid="uid://drnafeg2ojmsb" path="res://inventory/slot.gd" id="1_u4i3g"]
+
+[node name="Slot" type="PanelContainer" unique_id=1776120634]
+custom_minimum_size = Vector2(96, 96)
+offset_right = 40.0
+offset_bottom = 40.0
+script = ExtResource("1_u4i3g")
+
+[node name="MarginContainer" type="MarginContainer" parent="." unique_id=1207184605]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/margin_left = 4
+theme_override_constants/margin_top = 4
+theme_override_constants/margin_right = 4
+theme_override_constants/margin_bottom = 4
+
+[node name="TextureRect" type="TextureRect" parent="MarginContainer" unique_id=52511646]
+layout_mode = 2
+mouse_filter = 2
+expand_mode = 1
+stretch_mode = 5
+
+[node name="QuantityLabel" type="Label" parent="." unique_id=89569365]
+visible = false
+layout_mode = 2
+size_flags_horizontal = 8
+size_flags_vertical = 0
+theme_type_variation = &"SlotQuantity"
+text = "x99"
+
+[connection signal="gui_input" from="." to="." method="_on_gui_input"]
+[connection signal="mouse_exited" from="." to="." method="_on_mouse_exited"]

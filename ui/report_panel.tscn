@@ -1,0 +1,43 @@
+[gd_scene format=3 uid="uid://e53t78mmvjl2"]
+
+[ext_resource type="Script" uid="uid://b01qckq4v8rua" path="res://ui/report_panel.gd" id="1_6v7fx"]
+
+[node name="ReportPanel" type="PanelContainer" unique_id=1074223644]
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -49.0
+offset_top = -31.0
+offset_right = 49.0
+offset_bottom = 31.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_6v7fx")
+
+[node name="MarginContainer" type="MarginContainer" parent="." unique_id=977781968]
+layout_mode = 2
+theme_override_constants/margin_left = 10
+theme_override_constants/margin_top = 10
+theme_override_constants/margin_right = 10
+theme_override_constants/margin_bottom = 10
+
+[node name="VBoxContainer" type="VBoxContainer" parent="MarginContainer" unique_id=153484472]
+layout_mode = 2
+
+[node name="TitleLabel" type="Label" parent="MarginContainer/VBoxContainer" unique_id=1992113432]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"HeaderLabel"
+text = "Loot Earned!"
+
+[node name="ItemGrid" type="GridContainer" parent="MarginContainer/VBoxContainer" unique_id=1673298402]
+unique_name_in_owner = true
+layout_mode = 2
+columns = 5
+
+[node name="ContinueButton" type="Button" parent="MarginContainer/VBoxContainer" unique_id=163429746]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Continue"

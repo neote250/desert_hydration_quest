@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="ItemMaterial" format=3 uid="uid://dhhjopojir4rj"]
+
+[ext_resource type="Texture2D" uid="uid://c2t418trpjw5n" path="res://assets/ores-minerals-icons.png" id="1_l7d31"]
+[ext_resource type="Script" uid="uid://hm8iegvith6b" path="res://resources/items/item_material.gd" id="2_l7d31"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_l7d31"]
+atlas = ExtResource("1_l7d31")
+region = Rect2(160, 96, 32, 32)
+
+[resource]
+script = ExtResource("2_l7d31")
+id = &"Amber"
+display_name = "Amber"
+icon = SubResource("AtlasTexture_l7d31")
+rarity = 2
+metadata/_custom_type_script = "uid://cmondildki2yk"

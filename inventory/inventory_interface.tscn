@@ -1,0 +1,130 @@
+[gd_scene format=3 uid="uid://c0gq2ssh0o61d"]
+
+[ext_resource type="PackedScene" uid="uid://dh6kxogq0uhnb" path="res://inventory/inventory.tscn" id="1_kgkfg"]
+[ext_resource type="Script" uid="uid://bcxv00xqaqwiv" path="res://inventory/inventory_interface.gd" id="1_t67mr"]
+[ext_resource type="PackedScene" uid="uid://c2e17xc0y3iyy" path="res://inventory/slot.tscn" id="2_eb040"]
+[ext_resource type="Script" uid="uid://0mw6bme0gi1h" path="res://inventory/equipment_preview.gd" id="3_4kgnf"]
+[ext_resource type="Texture2D" uid="uid://beqdbx5gvlwto" path="res://assets/food-icons.png" id="4_yj37f"]
+[ext_resource type="Texture2D" uid="uid://iq1ahhlbvykv" path="res://assets/treasure-icons.png" id="5_2ro2f"]
+
+[sub_resource type="CompressedTexture2D" id="CompressedTexture2D_4kgnf"]
+load_path = "res://.godot/imported/animal-icons.png-f758db584ed8e4cda4e5715d2ed2daf4.ctex"
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_4kgnf"]
+atlas = SubResource("CompressedTexture2D_4kgnf")
+region = Rect2(128, 64, 32, 32)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_dl01d"]
+atlas = ExtResource("4_yj37f")
+region = Rect2(224, 128, 32, 32)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_yj37f"]
+atlas = ExtResource("5_2ro2f")
+region = Rect2(192, 160, 32, 32)
+
+[node name="InventoryInterface" type="Control" unique_id=236935295]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+script = ExtResource("1_t67mr")
+
+[node name="Dimmer" type="ColorRect" parent="." unique_id=1383758076]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0, 0, 0, 0.3137255)
+
+[node name="BottomSheet" type="PanelContainer" parent="." unique_id=1893766522]
+custom_minimum_size = Vector2(0, 400)
+layout_mode = 1
+anchors_preset = 12
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = -24.0
+grow_horizontal = 2
+grow_vertical = 0
+
+[node name="MarginContainer" type="MarginContainer" parent="BottomSheet" unique_id=162242660]
+layout_mode = 2
+theme_override_constants/margin_left = 12
+theme_override_constants/margin_top = 12
+theme_override_constants/margin_right = 12
+theme_override_constants/margin_bottom = 12
+
+[node name="HBoxContainer" type="HBoxContainer" parent="BottomSheet/MarginContainer" unique_id=168125661]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="PlayerInventory" parent="BottomSheet/MarginContainer/HBoxContainer" unique_id=794998334 instance=ExtResource("1_kgkfg")]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_stretch_ratio = 1.3
+
+[node name="EquipmentPreview" type="VBoxContainer" parent="BottomSheet/MarginContainer/HBoxContainer" unique_id=1972888709]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_stretch_ratio = 0.7
+script = ExtResource("3_4kgnf")
+
+[node name="TitleLabel" type="Label" parent="BottomSheet/MarginContainer/HBoxContainer/EquipmentPreview" unique_id=1510719804]
+layout_mode = 2
+theme_type_variation = &"HeaderLabel"
+text = "Equipped"
+
+[node name="Container" type="Control" parent="BottomSheet/MarginContainer/HBoxContainer/EquipmentPreview" unique_id=1020131831]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="AvatarSprite" type="TextureRect" parent="BottomSheet/MarginContainer/HBoxContainer/EquipmentPreview/Container" unique_id=181690]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+texture = SubResource("AtlasTexture_4kgnf")
+
+[node name="BottleSprite" type="TextureRect" parent="BottomSheet/MarginContainer/HBoxContainer/EquipmentPreview/Container" unique_id=1353220797]
+unique_name_in_owner = true
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+texture = SubResource("AtlasTexture_dl01d")
+
+[node name="AccessorySprite" type="TextureRect" parent="BottomSheet/MarginContainer/HBoxContainer/EquipmentPreview/Container" unique_id=649246577]
+unique_name_in_owner = true
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+texture = SubResource("AtlasTexture_yj37f")
+
+[node name="GrabbedSlot" parent="." unique_id=1776120634 instance=ExtResource("2_eb040")]
+unique_name_in_owner = true
+visible = false
+layout_mode = 0
+offset_left = 312.0
+offset_top = 592.0
+offset_right = 408.0
+offset_bottom = 688.0
+mouse_filter = 2
+
+[connection signal="visibility_changed" from="." to="." method="_on_visibility_changed"]
+[connection signal="gui_input" from="Dimmer" to="." method="_on_gui_input"]

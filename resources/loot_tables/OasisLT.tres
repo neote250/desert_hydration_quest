@@ -1,0 +1,23 @@
+[gd_resource type="Resource" script_class="LootTable" format=3 uid="uid://b0xi6bjs7jgtc"]
+
+[ext_resource type="Script" uid="uid://devruvem1w46k" path="res://resources/items/loot_entry.gd" id="1_3rj7m"]
+[ext_resource type="Script" uid="uid://bub4wjqw54gbf" path="res://resources/items/loot_table.gd" id="2_njgxo"]
+[ext_resource type="Resource" uid="uid://dks4yhuc8hfet" path="res://resources/items/minerals/SteelScrap.tres" id="2_tbc1n"]
+[ext_resource type="Resource" uid="uid://c7p0pquj843pk" path="res://resources/items/oasis_rewards/MoonlitWater.tres" id="3_tbc1n"]
+
+[sub_resource type="Resource" id="Resource_tbc1n"]
+script = ExtResource("1_3rj7m")
+item = ExtResource("2_tbc1n")
+weight = 75
+metadata/_custom_type_script = "uid://devruvem1w46k"
+
+[sub_resource type="Resource" id="Resource_7jnfd"]
+script = ExtResource("1_3rj7m")
+item = ExtResource("3_tbc1n")
+weight = 25
+metadata/_custom_type_script = "uid://devruvem1w46k"
+
+[resource]
+script = ExtResource("2_njgxo")
+entries = Array[ExtResource("1_3rj7m")]([SubResource("Resource_tbc1n"), SubResource("Resource_7jnfd")])
+metadata/_custom_type_script = "uid://bub4wjqw54gbf"

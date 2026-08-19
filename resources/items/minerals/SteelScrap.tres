@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="ItemMaterial" format=3 uid="uid://dks4yhuc8hfet"]
+
+[ext_resource type="Script" uid="uid://hm8iegvith6b" path="res://resources/items/item_material.gd" id="1_lpljv"]
+[ext_resource type="Texture2D" uid="uid://c2t418trpjw5n" path="res://assets/ores-minerals-icons.png" id="1_yypev"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_lpljv"]
+atlas = ExtResource("1_yypev")
+region = Rect2(128, 0, 32, 32)
+
+[resource]
+script = ExtResource("1_lpljv")
+id = &"SteelScrap"
+display_name = "Steel Scrap"
+description = "Salvage metal"
+icon = SubResource("AtlasTexture_lpljv")
+metadata/_custom_type_script = "uid://hm8iegvith6b"

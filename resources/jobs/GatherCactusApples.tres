@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="Job" format=3 uid="uid://ig2u31hqo2kw"]
+
+[ext_resource type="Resource" uid="uid://dhhjopojir4rj" path="res://resources/items/minerals/Amber.tres" id="1_q6xml"]
+[ext_resource type="Script" uid="uid://lpo0i6335001" path="res://resources/jobs/job.gd" id="1_re4mk"]
+
+[resource]
+script = ExtResource("1_re4mk")
+name = "Gather Cactus Apples"
+reward = ExtResource("1_q6xml")
+reward_count = 5
+water_goal_ml = 950.0
+notification_interval_min = 10
+description = "A local delicacy. You may gather extra for yourself if you want. "
+metadata/_custom_type_script = "uid://lpo0i6335001"

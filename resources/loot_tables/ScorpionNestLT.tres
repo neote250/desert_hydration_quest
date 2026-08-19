@@ -1,0 +1,30 @@
+[gd_resource type="Resource" script_class="LootTable" format=3 uid="uid://cm6caf0y6glb2"]
+
+[ext_resource type="Script" uid="uid://devruvem1w46k" path="res://resources/items/loot_entry.gd" id="1_ot2p5"]
+[ext_resource type="Resource" uid="uid://ceenf8oxsoejq" path="res://resources/items/monster_parts/ScorpionStinger.tres" id="2_dp2do"]
+[ext_resource type="Script" uid="uid://bub4wjqw54gbf" path="res://resources/items/loot_table.gd" id="3_g32ce"]
+[ext_resource type="Resource" uid="uid://bq2ubfq1ejqv6" path="res://resources/items/monster_parts/ScorpionClaw.tres" id="3_y60ic"]
+[ext_resource type="Resource" uid="uid://dhhjopojir4rj" path="res://resources/items/minerals/Amber.tres" id="4_g32ce"]
+
+[sub_resource type="Resource" id="Resource_onio4"]
+script = ExtResource("1_ot2p5")
+item = ExtResource("2_dp2do")
+weight = 30
+metadata/_custom_type_script = "uid://devruvem1w46k"
+
+[sub_resource type="Resource" id="Resource_s36lg"]
+script = ExtResource("1_ot2p5")
+item = ExtResource("3_y60ic")
+weight = 60
+metadata/_custom_type_script = "uid://devruvem1w46k"
+
+[sub_resource type="Resource" id="Resource_dp2do"]
+script = ExtResource("1_ot2p5")
+item = ExtResource("4_g32ce")
+weight = 10
+metadata/_custom_type_script = "uid://devruvem1w46k"
+
+[resource]
+script = ExtResource("3_g32ce")
+entries = Array[ExtResource("1_ot2p5")]([SubResource("Resource_onio4"), SubResource("Resource_s36lg"), SubResource("Resource_dp2do")])
+metadata/_custom_type_script = "uid://bub4wjqw54gbf"

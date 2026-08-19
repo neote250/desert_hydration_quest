@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="ItemMaterial" format=3 uid="uid://bq2ubfq1ejqv6"]
+
+[ext_resource type="Texture2D" uid="uid://bru7riq3icje0" path="res://assets/monster-parts-icons.png" id="1_fjurs"]
+[ext_resource type="Script" uid="uid://hm8iegvith6b" path="res://resources/items/item_material.gd" id="2_fjurs"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_g32ce"]
+atlas = ExtResource("1_fjurs")
+region = Rect2(192, 192, 32, 32)
+
+[resource]
+script = ExtResource("2_fjurs")
+id = &"ScClaw"
+display_name = "Scorpion Claw"
+icon = SubResource("AtlasTexture_g32ce")
+metadata/_custom_type_script = "uid://cmondildki2yk"

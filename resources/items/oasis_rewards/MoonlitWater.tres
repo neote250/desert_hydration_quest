@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="ItemMaterial" format=3 uid="uid://c7p0pquj843pk"]
+
+[ext_resource type="Script" uid="uid://hm8iegvith6b" path="res://resources/items/item_material.gd" id="1_qeffm"]
+
+[sub_resource type="CompressedTexture2D" id="CompressedTexture2D_qeffm"]
+load_path = "res://.godot/imported/weather-icons.png-8b6a93ccfab24b6c252701cb3c898b57.ctex"
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_v0gdx"]
+atlas = SubResource("CompressedTexture2D_qeffm")
+region = Rect2(64, 32, 32, 32)
+
+[resource]
+script = ExtResource("1_qeffm")
+id = &"MoonlitWater"
+display_name = "Moonlit Water"
+description = "Especially shiny water."
+icon = SubResource("AtlasTexture_v0gdx")
+rarity = 2
+metadata/_custom_type_script = "uid://hm8iegvith6b"

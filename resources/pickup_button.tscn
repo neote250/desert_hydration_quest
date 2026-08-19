@@ -1,0 +1,21 @@
+[gd_scene format=3 uid="uid://d00lgms07vk2b"]
+
+[ext_resource type="Script" uid="uid://byvtcubqv3eoq" path="res://resources/pickup_button.gd" id="1_kcnwv"]
+
+[sub_resource type="CompressedTexture2D" id="CompressedTexture2D_a3dk5"]
+load_path = "res://.godot/imported/food-icons.png-2d38a4f0bd1f0d50dee03d667538be4a.ctex"
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_3bh55"]
+atlas = SubResource("CompressedTexture2D_a3dk5")
+region = Rect2(32, 192, 32, 32)
+
+[node name="PickupButton" type="TextureButton" unique_id=424929446]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+texture_normal = SubResource("AtlasTexture_3bh55")
+script = ExtResource("1_kcnwv")
+
+[connection signal="pressed" from="." to="." method="_on_pressed"]

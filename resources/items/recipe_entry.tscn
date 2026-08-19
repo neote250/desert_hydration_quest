@@ -1,0 +1,62 @@
+[gd_scene format=3 uid="uid://c6eypit4513fe"]
+
+[ext_resource type="Script" uid="uid://cec11atf74t7" path="res://resources/items/recipe_entry.gd" id="1_a5q8k"]
+
+[node name="RecipeEntry" type="PanelContainer" unique_id=1981266351]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_a5q8k")
+
+[node name="MarginContainer" type="MarginContainer" parent="." unique_id=1000940935]
+layout_mode = 2
+theme_override_constants/margin_left = 10
+theme_override_constants/margin_top = 10
+theme_override_constants/margin_right = 10
+theme_override_constants/margin_bottom = 10
+
+[node name="VBoxContainer" type="VBoxContainer" parent="MarginContainer" unique_id=1103733447]
+layout_mode = 2
+
+[node name="TopRow" type="HBoxContainer" parent="MarginContainer/VBoxContainer" unique_id=463627970]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="OutputIcon" type="TextureRect" parent="MarginContainer/VBoxContainer/TopRow" unique_id=361908154]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(56, 56)
+layout_mode = 2
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Labels" type="VBoxContainer" parent="MarginContainer/VBoxContainer/TopRow" unique_id=840761336]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="NameLabel" type="Label" parent="MarginContainer/VBoxContainer/TopRow/Labels" unique_id=1335666128]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_font_sizes/font_size = 20
+text = "default"
+
+[node name="RarityLabel" type="Label" parent="MarginContainer/VBoxContainer/TopRow/Labels" unique_id=578649133]
+unique_name_in_owner = true
+layout_mode = 2
+text = "default"
+
+[node name="CraftButton" type="Button" parent="MarginContainer/VBoxContainer/TopRow" unique_id=1113570528]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(96, 48)
+layout_mode = 2
+theme_override_font_sizes/font_size = 20
+text = "Craft"
+
+[node name="IngredientRow" type="HBoxContainer" parent="MarginContainer/VBoxContainer" unique_id=1744967021]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[connection signal="pressed" from="MarginContainer/VBoxContainer/TopRow/CraftButton" to="." method="_on_craft_button_pressed"]

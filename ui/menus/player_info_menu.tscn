@@ -1,0 +1,131 @@
+[gd_scene format=3 uid="uid://cyq4j0iym5kg3"]
+
+[ext_resource type="Script" uid="uid://djt4iqt7imn5t" path="res://ui/menus/player_info_menu.gd" id="1_qqo7h"]
+[ext_resource type="Texture2D" uid="uid://bguo6r5lgyvug" path="res://assets/CozyUi.png" id="4_t8mvy"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_t8mvy"]
+bg_color = Color(0.14509805, 0.32156864, 0.38431373, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_3jirg"]
+bg_color = Color(0.14509805, 0.32156864, 0.38431373, 1)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_qqo7h"]
+atlas = ExtResource("4_t8mvy")
+region = Rect2(554, 639, 57, 33)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_3jirg"]
+atlas = ExtResource("4_t8mvy")
+region = Rect2(556, 672, 57, 33)
+
+[node name="PlayerInfoMenu" type="Control" unique_id=920334584]
+custom_minimum_size = Vector2(700, 750)
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_qqo7h")
+
+[node name="Dim" type="ColorRect" parent="." unique_id=89504142]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0, 0, 0, 0.20392157)
+
+[node name="Panel" type="PanelContainer" parent="." unique_id=911081839]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="MarginContainer" type="MarginContainer" parent="Panel" unique_id=96708606]
+layout_mode = 2
+theme_override_constants/margin_left = 50
+theme_override_constants/margin_top = 20
+theme_override_constants/margin_right = 50
+theme_override_constants/margin_bottom = 20
+
+[node name="VBoxContainer" type="VBoxContainer" parent="Panel/MarginContainer" unique_id=1702248354]
+layout_mode = 2
+theme_override_constants/separation = 50
+alignment = 1
+
+[node name="HBoxContainer" type="HBoxContainer" parent="Panel/MarginContainer/VBoxContainer" unique_id=330277123]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="Panel/MarginContainer/VBoxContainer/HBoxContainer" unique_id=1400925540]
+layout_mode = 2
+theme_type_variation = &"HeaderLabel"
+text = "Enter Your Info"
+
+[node name="HSeparator" type="HSeparator" parent="Panel/MarginContainer/VBoxContainer" unique_id=747468692]
+layout_mode = 2
+
+[node name="NameInput" type="LineEdit" parent="Panel/MarginContainer/VBoxContainer" unique_id=164758832]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+placeholder_text = "Username"
+max_length = 16
+
+[node name="HBoxContainer2" type="HBoxContainer" parent="Panel/MarginContainer/VBoxContainer" unique_id=23517550]
+layout_mode = 2
+
+[node name="WeightSB" type="SpinBox" parent="Panel/MarginContainer/VBoxContainer/HBoxContainer2" unique_id=1887544775]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 350)
+layout_mode = 2
+theme_override_constants/buttons_vertical_separation = 10
+theme_override_constants/buttons_width = 150
+theme_override_styles/up_background = SubResource("StyleBoxFlat_t8mvy")
+theme_override_styles/down_background = SubResource("StyleBoxFlat_3jirg")
+min_value = 70.0
+max_value = 500.0
+value = 170.0
+rounded = true
+allow_greater = true
+allow_lesser = true
+alignment = 1
+
+[node name="WeightOptionBtn" type="OptionButton" parent="Panel/MarginContainer/VBoxContainer/HBoxContainer2" unique_id=1591227846]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 48
+alignment = 1
+selected = 0
+item_count = 2
+popup/item_0/text = "LB"
+popup/item_0/id = 0
+popup/item_1/text = "KG"
+popup/item_1/id = 1
+
+[node name="HBoxContainer3" type="HBoxContainer" parent="Panel/MarginContainer/VBoxContainer" unique_id=1179262423]
+visible = false
+layout_mode = 2
+
+[node name="TextureButton" type="TextureButton" parent="Panel/MarginContainer/VBoxContainer/HBoxContainer3" unique_id=336763827]
+custom_minimum_size = Vector2(125, 75)
+layout_mode = 2
+texture_normal = SubResource("AtlasTexture_qqo7h")
+stretch_mode = 5
+
+[node name="Control" type="Control" parent="Panel/MarginContainer/VBoxContainer/HBoxContainer3" unique_id=1685418351]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="TextureButton2" type="TextureButton" parent="Panel/MarginContainer/VBoxContainer/HBoxContainer3" unique_id=358864145]
+custom_minimum_size = Vector2(125, 75)
+layout_mode = 2
+texture_normal = SubResource("AtlasTexture_3jirg")
+stretch_mode = 5
+
+[connection signal="text_changed" from="Panel/MarginContainer/VBoxContainer/NameInput" to="." method="_on_name_input_text_changed"]
+[connection signal="value_changed" from="Panel/MarginContainer/VBoxContainer/HBoxContainer2/WeightSB" to="." method="_on_weight_sb_value_changed"]
+[connection signal="item_selected" from="Panel/MarginContainer/VBoxContainer/HBoxContainer2/WeightOptionBtn" to="." method="_on_weight_option_btn_item_selected"]

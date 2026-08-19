@@ -1,0 +1,2410 @@
+diff --git a/.archive/old_inventory_interface.gd b/.archive/old_inventory_interface.gd
+new file mode 100644
+index 0000000..2909886
+--- /dev/null
++++ b/.archive/old_inventory_interface.gd
+@@ -0,0 +1,113 @@
++extends Control
++
++signal drop_slot_data(slot_data:SlotData)
++signal force_close()
++
++const GRAB_OFFSET := Vector2(0, -80)  # hold item above the finger
++
++var grabbed_slot_data: SlotData
++var external_inventory_owner
++
++@onready var player_inventory: PanelContainer = $PlayerInventory
++@onready var grabbed_slot: PanelContainer = $GrabbedSlot
++@onready var external_inventory: PanelContainer = $ExternalInventory
++@onready var equipment_inventory: PanelContainer = $EquipmentInventory
++
++
++func _physics_process(delta: float) -> void:
++	if grabbed_slot.visible:
++		grabbed_slot.global_position = get_global_mouse_position() + Vector2(5,5)
++	
++	
++	##TODO change this to just be an inventory button
++	#if external_inventory_owner \
++			#and external_inventory_owner.global_position.distance_to(PlayerManager.get_global_position()) > 4:
++		#force_close.emit()
++
++
++func set_player_inventory_data(inventory_data: InventoryData) -> void:
++	inventory_data.inventory_interact.connect(on_inventory_interact)
++	player_inventory.set_inventory_data(inventory_data)
++
++func set_equipment_inventory_data(inventory_data: InventoryData) -> void:
++	inventory_data.inventory_interact.connect(on_inventory_interact)
++	equipment_inventory.set_inventory_data(inventory_data)
++
++
++func set_external_inventory(_external_inventory_owner) -> void:
++	external_inventory_owner = _external_inventory_owner
++	var inventory_data = external_inventory_owner.inventory_data
++	
++	inventory_data.inventory_interact.connect(on_inventory_interact)
++	external_inventory.set_inventory_data(inventory_data)
++	
++	external_inventory.show()
++
++func clear_external_inventory() -> void:
++	if external_inventory_owner:
++		var inventory_data = external_inventory_owner.inventory_data
++		
++		inventory_data.inventory_interact.disconnect(on_inventory_interact)
++		external_inventory.clear_inventory_data(inventory_data)
++		
++		external_inventory.hide()
++		external_inventory_owner = null
++
++
++
++func on_inventory_interact(inventory_data:InventoryData, index:int, button:int) -> void:
++	#print("%s %s %s" % [inventory_data, index, button])
++	
++	match [grabbed_slot_data, button]:
++		[null, MOUSE_BUTTON_LEFT]:
++			grabbed_slot_data = inventory_data.grab_slot_data(index)
++		[_, MOUSE_BUTTON_LEFT]:
++			grabbed_slot_data = inventory_data.drop_slot_data(grabbed_slot_data, index)
++		[null, MOUSE_BUTTON_RIGHT]:
++			inventory_data.use_slot_data(index)
++		[_, MOUSE_BUTTON_RIGHT]:
++			grabbed_slot_data = inventory_data.drop_single_slot_data(grabbed_slot_data, index)
++	
++	update_grabbed_slot()
++
++func update_grabbed_slot() -> void:
++	if grabbed_slot_data:
++		grabbed_slot.show()
++		grabbed_slot.set_slot_data(grabbed_slot_data)
++	else:
++		grabbed_slot.hide()
++
++
++func _input(event: InputEvent) -> void:
++	if not grabbed_slot.visible:
++		return
++	if event is InputEventScreenTouch or event is InputEventScreenDrag:
++		grabbed_slot.global_position = event.position + GRAB_OFFSET
++	elif event is InputEventMouseMotion:  # desktop testing
++		grabbed_slot.global_position = event.position + GRAB_OFFSET
++
++
++func _on_gui_input(event: InputEvent) -> void:
++	if event is InputEventMouseButton \
++			and event.is_pressed() \
++			and grabbed_slot_data:
++		match event.button_index:
++			MOUSE_BUTTON_LEFT:
++				#drop_slot_data.emit(grabbed_slot_data)
++				grabbed_slot_data = null
++				GameManager.player_inventory_data.pickup_slot_data()
++			#MOUSE_BUTTON_RIGHT:
++				#drop_slot_data.emit(grabbed_slot_data.create_single_slot_data())
++				#if grabbed_slot_data.quantity < 1:
++					#grabbed_slot_data = null
++		
++		
++		
++		update_grabbed_slot()
++
++
++func _on_visibility_changed() -> void:
++	if not visible and grabbed_slot_data:
++		drop_slot_data.emit(grabbed_slot_data)
++		grabbed_slot_data = null
++		update_grabbed_slot()
+diff --git a/.archive/shop.gd b/.archive/shop.gd
+new file mode 100644
+index 0000000..a11376e
+--- /dev/null
++++ b/.archive/shop.gd
+@@ -0,0 +1,29 @@
++extends PanelContainer
++
++const RECIPE_ENTRY = preload("uid://c6eypit4513fe")
++
++@export var recipes: Array[Recipe] = []
++
++@onready var recipe_list: VBoxContainer = $MarginContainer/RecipeList
++
++func _ready() -> void:
++	GameManager.player_inventory_data.inventory_updated.connect(_refresh)
++	_populate()
++
++func _populate() -> void:
++	for recipe in recipes:
++		var entry = RECIPE_ENTRY.instantiate()
++		recipe_list.add_child(entry)
++		entry.set_recipe(recipe)
++		entry.craft_requested.connect(_on_craft_requested)
++
++func _refresh(_inv: InventoryData) -> void:
++	for entry in recipe_list.get_children():
++		entry.refresh()
++
++func _on_craft_requested(recipe: Recipe) -> void:
++	var inv := GameManager.PLAYER_INVENTORY
++	if not inv.consume(recipe):
++		return
++	if GameManager.own_cosmetic(recipe.output):
++		SignalManager.cosmetic_crafted.emit(recipe.output)
+diff --git a/docs/design_notes.md b/docs/design_notes.md
+new file mode 100644
+index 0000000..43a7f2d
+--- /dev/null
++++ b/docs/design_notes.md
+@@ -0,0 +1,71 @@
++# Oasis in a Desert Adventure — design notes
++
++Moved out of the top of `game_manager.gd` so that file reads as code.
++
++## Units
++
++Every water volume in the game is **millilitres**. `BottleSize.measurement` is a
++display preference and is applied only at the UI layer, via
++`BottleSize.to_display()` / `from_display()` / `format_volume()`.
++
++A sip is estimated at ~15 ml (the player's own notes put it at 0.2–0.5 oz).
++Because that is an estimate, bottle progress is never shown as a hard number —
++the oasis mirage just fades in as the estimate approaches the bottle's capacity,
++and the player decides when the bottle is actually done.
++
++## New player setup
++
++- Player chooses an avatar (adventurer / merchant / …) — stretch goal
++- Player gives weight, or skips
++- Player sets a hydration goal (offer an estimate from weight; ~30 ml/kg/day)
++- Player sets the size of their first bottle
++- Player chooses a liquid (water, juice, milk …) for efficiency toward the goal — stretch goal
++
++## Bottles
++
++- The player can hold up to ~5 bottle sizes and equip one to drink from
++- Bottles can be created, modified, or deleted during play
++- Swapping a bottle mid-drink carries progress across (`keep_progress`)
++- Dumping the rest clears the bottle's progress
++
++## Gameplay loop
++
++1. Player starts in their room
++2. Leaves via the stairs texture button → guild hall
++3. Clicks the job clerk → job board
++4. Picks a job. A job is a water goal plus a reminder cadence:
++   - **Long / Delivery** — passive, whole day, option for no minigames
++   - **Medium / Quest** — the default; average minigames, engaged play
++   - **Short / Hunt** — boss minigame at the end, accelerometer run for a bigger
++     monster and better loot
++   - Reminder interval is chosen on the board (10 min recommended)
++   - A job can be ended early for reduced rewards
++5. Character sets out → journey screen (splash, animation, occasional tips)
++6. Reminders fire at the chosen interval. Each one rolls:
++   - a critter / scenery animation (nothing)
++   - free loot (a hidden cache)
++   - a minigame (may be saved for later or skipped for average loot)
++   - *(not implemented yet — see `journey.job_event_happened()`)*
++7. The longer the player waits to press Drink, the redder the character gets.
++   Each drink pushes the tint back.
++8. When the bottle is done, the player refills at the oasis. That cashes out the
++   water banked since the last refill as loot rolls — time-gated by design, so
++   sipping is encouraged over chugging.
++9. When the job's water goal is met → quest goal screen with rewards.
++10. Then either journey back or auto-transport to the previous town. **Undecided.**
++
++## Open questions
++
++- Does hitting the *daily* goal deserve its own screen, or just the celebration
++  it currently gets? (`SignalManager.daily_goal_reached`)
++- Overdrinking: `GameManager` detects >800 ml in an hour and emits
++  `overdrink_warning`. Nothing listens yet. What should it do — refuse to log
++  the sip, log it but pay no loot, or just warn?
++- After the quest goal screen: journey back, or auto-transport?
++
++## Not in the MVP
++
++- `ui/menus/custom_quest_menu.*` — player-defined goals. Parked.
++- The material shop (buy stock with currency, rotates daily). The *crafter*
++  exists as `shop_interface`; the shop clerk button is still a no-op.
++- Room animation spots (RestSpot / WorkSpot / FunSpot).
+diff --git a/inventory/equipment_preview.gd b/inventory/equipment_preview.gd
+index 264ff44..9b4a80a 100644
+--- a/inventory/equipment_preview.gd
++++ b/inventory/equipment_preview.gd
+@@ -14,7 +14,7 @@ func _ready() -> void:
+ 
+ func _refresh_all() -> void:
+ 	for slot_type in sprites:
+-		var item: ItemCosmetic = GameManager.equipped.get(slot_type)
++		var item := GameManager.equipped_in(slot_type)
+ 		_apply(slot_type, item)
+ 
+ func _on_cosmetic_equipped(slot_type: ItemCosmetic.SLOT_TYPE, item: ItemCosmetic) -> void:
+diff --git a/inventory/inventory_data.gd b/inventory/inventory_data.gd
+index 9e547f1..dc9001b 100644
+--- a/inventory/inventory_data.gd
++++ b/inventory/inventory_data.gd
+@@ -45,33 +45,21 @@ func drop_single_slot_data(grabbed_slot_data: SlotData, index:int) -> SlotData:
+ 		return null
+ 
+ 
++## Long-press on a slot. Cosmetics equip; consumables are spent.
+ func use_slot_data(index:int) -> void:
+ 	var slot_data = slot_datas[index]
+-	
+ 	if not slot_data:
+ 		return
+-	
+-	#if slot_data.item_data is ItemDataConsumable:
+-		#slot_data.quantity -= 1
+-		#if slot_data.quantity < 1:
+-			#slot_datas[index] = null
+-	
+-	if slot_data.item_data is ItemCosmetic:
+-		GameManager.equip(slot_data.item_data)  # long-press a cosmetic = equip it
+-	
+-	#PlayerManager.use_slot_data(slot_data)
+-	
+-	##TODO this needs to be fixed
+ 
+-	
+-	if slot_data.item_data is ItemConsumable:
+-		slot_data.item_data.use(GameManager)  # or whatever target makes sense
++	if slot_data.item_data is ItemCosmetic:
++		GameManager.equip(slot_data.item_data)
++	elif slot_data.item_data is ItemConsumable:
++		slot_data.item_data.use(GameManager)
+ 		SignalManager.item_used.emit(slot_data.item_data)
+-		
+ 		slot_data.quantity -= 1
+ 		if slot_data.quantity < 1:
+ 			slot_datas[index] = null
+-	
++
+ 	inventory_updated.emit(self)
+ 
+ 
+@@ -114,14 +102,14 @@ func can_afford(recipe: Recipe) -> bool:
+ 			return false
+ 	return true
+ 
++## Spend a recipe's ingredients. A data resource should not know the shopkeeper
++## exists, so telling the player about it is the caller's job.
+ func consume(recipe: Recipe) -> bool:
+ 	if not can_afford(recipe):
+-		Ui.shop_interface.shopkeeper_column.come_back_later()
+ 		return false
+ 	for ing in recipe.ingredients:
+ 		_remove_item(ing.material, ing.count)
+ 	inventory_updated.emit(self)
+-	Ui.shop_interface.shopkeeper_column.crafted()
+ 	return true
+ 
+ func _remove_item(item: Item, count: int) -> void:
+diff --git a/minigames/scorpion_nest_mg.gd b/minigames/scorpion_nest_mg.gd
+index 85be4d2..ec27e20 100644
+--- a/minigames/scorpion_nest_mg.gd
++++ b/minigames/scorpion_nest_mg.gd
+@@ -41,7 +41,6 @@ var monsters_resolved := 0
+ var loot_earned: Array[Item] = []
+ 
+ const monster_scene = preload("uid://ju7k66vphm8")
+-const JOURNEY = preload("uid://bcrwp75bbkcex")
+ 
+ func _ready() -> void:
+ 	enter()
+@@ -65,7 +64,7 @@ func exit() -> void:
+ 	for monster:DriftingMonster in monster_container:
+ 		monster.reached_player.disconnect(_on_monster_reached_player.bind(monster))
+ 		monster.queue_free()
+-	get_tree().change_scene_to_packed(JOURNEY)
++	GameManager.go_to(Screens.NAME.JOURNEY)
+ 
+ 
+ 
+@@ -139,8 +138,10 @@ func _check_end_conditions() -> void:
+ 
+ func _roll_loot() -> void:
+ 	var slot_data := LootTables.roll(LootTables.TABLES.NEST_MG)
+-	loot_earned.append(slot_data.item_data)
+-	GameManager.PLAYER_INVENTORY.pickup_slot_data(slot_data)
++	if slot_data == null:
++		return
++	if GameManager.PLAYER_INVENTORY.pickup_slot_data(slot_data):
++		loot_earned.append(slot_data.item_data)
+ 	
+ # --- End / report ----------------------------------------------
+ 
+diff --git a/old_inventory_interface.gd b/old_inventory_interface.gd
+index 2909886..454c90b 100644
+--- a/old_inventory_interface.gd
++++ b/old_inventory_interface.gd
+@@ -1,113 +1,7 @@
+ extends Control
+ 
+-signal drop_slot_data(slot_data:SlotData)
+-signal force_close()
+-
+-const GRAB_OFFSET := Vector2(0, -80)  # hold item above the finger
+-
+-var grabbed_slot_data: SlotData
+-var external_inventory_owner
+-
+-@onready var player_inventory: PanelContainer = $PlayerInventory
+-@onready var grabbed_slot: PanelContainer = $GrabbedSlot
+-@onready var external_inventory: PanelContainer = $ExternalInventory
+-@onready var equipment_inventory: PanelContainer = $EquipmentInventory
+-
+-
+-func _physics_process(delta: float) -> void:
+-	if grabbed_slot.visible:
+-		grabbed_slot.global_position = get_global_mouse_position() + Vector2(5,5)
+-	
+-	
+-	##TODO change this to just be an inventory button
+-	#if external_inventory_owner \
+-			#and external_inventory_owner.global_position.distance_to(PlayerManager.get_global_position()) > 4:
+-		#force_close.emit()
+-
+-
+-func set_player_inventory_data(inventory_data: InventoryData) -> void:
+-	inventory_data.inventory_interact.connect(on_inventory_interact)
+-	player_inventory.set_inventory_data(inventory_data)
+-
+-func set_equipment_inventory_data(inventory_data: InventoryData) -> void:
+-	inventory_data.inventory_interact.connect(on_inventory_interact)
+-	equipment_inventory.set_inventory_data(inventory_data)
+-
+-
+-func set_external_inventory(_external_inventory_owner) -> void:
+-	external_inventory_owner = _external_inventory_owner
+-	var inventory_data = external_inventory_owner.inventory_data
+-	
+-	inventory_data.inventory_interact.connect(on_inventory_interact)
+-	external_inventory.set_inventory_data(inventory_data)
+-	
+-	external_inventory.show()
+-
+-func clear_external_inventory() -> void:
+-	if external_inventory_owner:
+-		var inventory_data = external_inventory_owner.inventory_data
+-		
+-		inventory_data.inventory_interact.disconnect(on_inventory_interact)
+-		external_inventory.clear_inventory_data(inventory_data)
+-		
+-		external_inventory.hide()
+-		external_inventory_owner = null
+-
+-
+-
+-func on_inventory_interact(inventory_data:InventoryData, index:int, button:int) -> void:
+-	#print("%s %s %s" % [inventory_data, index, button])
+-	
+-	match [grabbed_slot_data, button]:
+-		[null, MOUSE_BUTTON_LEFT]:
+-			grabbed_slot_data = inventory_data.grab_slot_data(index)
+-		[_, MOUSE_BUTTON_LEFT]:
+-			grabbed_slot_data = inventory_data.drop_slot_data(grabbed_slot_data, index)
+-		[null, MOUSE_BUTTON_RIGHT]:
+-			inventory_data.use_slot_data(index)
+-		[_, MOUSE_BUTTON_RIGHT]:
+-			grabbed_slot_data = inventory_data.drop_single_slot_data(grabbed_slot_data, index)
+-	
+-	update_grabbed_slot()
+-
+-func update_grabbed_slot() -> void:
+-	if grabbed_slot_data:
+-		grabbed_slot.show()
+-		grabbed_slot.set_slot_data(grabbed_slot_data)
+-	else:
+-		grabbed_slot.hide()
+-
+-
+-func _input(event: InputEvent) -> void:
+-	if not grabbed_slot.visible:
+-		return
+-	if event is InputEventScreenTouch or event is InputEventScreenDrag:
+-		grabbed_slot.global_position = event.position + GRAB_OFFSET
+-	elif event is InputEventMouseMotion:  # desktop testing
+-		grabbed_slot.global_position = event.position + GRAB_OFFSET
+-
+-
+-func _on_gui_input(event: InputEvent) -> void:
+-	if event is InputEventMouseButton \
+-			and event.is_pressed() \
+-			and grabbed_slot_data:
+-		match event.button_index:
+-			MOUSE_BUTTON_LEFT:
+-				#drop_slot_data.emit(grabbed_slot_data)
+-				grabbed_slot_data = null
+-				GameManager.player_inventory_data.pickup_slot_data()
+-			#MOUSE_BUTTON_RIGHT:
+-				#drop_slot_data.emit(grabbed_slot_data.create_single_slot_data())
+-				#if grabbed_slot_data.quantity < 1:
+-					#grabbed_slot_data = null
+-		
+-		
+-		
+-		update_grabbed_slot()
+-
+-
+-func _on_visibility_changed() -> void:
+-	if not visible and grabbed_slot_data:
+-		drop_slot_data.emit(grabbed_slot_data)
+-		grabbed_slot_data = null
+-		update_grabbed_slot()
++## DEPRECATED - superseded by inventory/inventory_interface.gd.
++##
++## The original is preserved at .archive/old_inventory_interface.gd (Godot
++## ignores dot-folders). This stub exists only because the file could not be
++## deleted remotely. Delete it from Godot's FileSystem dock when convenient.
+diff --git a/player_character.gd b/player_character.gd
+index 874f3e6..bf4f8ff 100644
+--- a/player_character.gd
++++ b/player_character.gd
+@@ -1,63 +1,71 @@
+ extends ColorRect
+ class_name PlayerCharacter
+ 
+-##change this with a red tinted version of PC
+-@onready var red_overlay: CanvasItem = $"../RedTint"
++## Drives the sun-damage red overlay. Hydration drifts down in real time and is
++## topped back up whenever the player logs a drink.
++##
++## TODO: swap the ColorRect for an actual red-tinted version of the character art.
++
++## Set true to run decay at 120x so a full dry-out takes seconds, not hours.
++@export var debug_fast_decay := false
++const DEBUG_TIME_SCALE := 120.0
++
++const SECONDS_PER_HOUR := 3600.0
++
++## How long from fully hydrated to fully red with no drinking.
++@export var hours_to_max_dehydration: float = 4.0
++
++## How much of the bar one logged drink restores.
++@export var hydration_per_drink: float = 0.25
+ 
+-# Configurable settings
+-@export var hours_to_max_dehydration: float = 4
++## Only push the overlay when it actually moved; avoids per-frame churn.
++const TINT_EPSILON := 0.002
+ 
+-# Hydration state: 1.0 = fully hydrated (no red), 0.0 = max dehydrated (full red)
++## 1.0 = fully hydrated (no red), 0.0 = max dehydrated (full red).
+ var hydration_level: float = 1.0
+ 
++var _last_applied_alpha := -1.0
++
++@onready var red_overlay: CanvasItem = $"../RedTint"
++
++
+ func _ready() -> void:
+-	update_tint()
++	hydration_level = GameManager.saved_game.player_hydration
++	_apply_tint()
++
+ 
+ func _process(delta: float) -> void:
+-	# Convert delta (seconds elapsed this frame) into hours
+-	#var hours_passed = delta / 3600.0 #Actual Numbers
+-	var hours_passed = delta / 30.0 #Testing with half Min
+-	var decay_amount = hours_passed / hours_to_max_dehydration
+-	
+-	# Slowly reduce hydration and update tint live
+-	hydration_level = clamp(hydration_level - decay_amount, 0.0, 1.0)
+-	update_tint()
++	_decay(delta * (DEBUG_TIME_SCALE if debug_fast_decay else 1.0))
+ 
+ 
++## Catch up on the time the app spent closed. Called on resume.
+ func apply_decay() -> void:
+-
+ 	hydration_level = GameManager.saved_game.player_hydration
+-	
+-	# Calculate elapsed hours away
+-	var prev_time = GameManager.saved_game.previous_login
+-	var current_time = Time.get_unix_time_from_system()
+-	var seconds_away = max(0.0, current_time - prev_time)
+-	#var hours_away = seconds_away / 3600.0 #actual numbers
+-	var hours_away = seconds_away / 60.0 #Test in a Min
+-	
+-	# Apply decay based on time spent away
+-	var decay_amount = hours_away / hours_to_max_dehydration
+-	hydration_level = clamp(hydration_level - decay_amount, 0.0, 1.0)
+-	
+-	update_tint()
+-
+-# Call this when the player drinks water, TODO need to fine tune the amount given here
+-func drank_water(amount: float = 0.25) -> void:
+-	var temp: float = clamp(hydration_level + amount, 0.0, 1.0)
+-	if temp < 0.01:
++	var seconds_away := maxf(
++		0.0, Time.get_unix_time_from_system() - GameManager.saved_game.previous_login
++	)
++	_decay(seconds_away * (DEBUG_TIME_SCALE if debug_fast_decay else 1.0))
++
++
++func _decay(seconds: float) -> void:
++	var hours := seconds / SECONDS_PER_HOUR
++	hydration_level = clampf(hydration_level - hours / hours_to_max_dehydration, 0.0, 1.0)
++	_apply_tint()
++
++
++## Called by GameManager.drink(). Does not write the save file — GameManager
++## owns saving, and writing to disk on every sip was hammering storage.
++func drank_water(amount: float = -1.0) -> void:
++	var gain := hydration_per_drink if amount < 0.0 else amount
++	hydration_level = clampf(hydration_level + gain, 0.0, 1.0)
++	_apply_tint()
++
++
++func _apply_tint() -> void:
++	var red_alpha := 1.0 - hydration_level
++	GameManager.saved_game.player_hydration = hydration_level
++
++	if absf(red_alpha - _last_applied_alpha) < TINT_EPSILON:
+ 		return
+-	hydration_level = temp
+-	update_tint()
+-	GameManager.save()
+-
+-func update_tint() -> void:
+-	# At 1.0 (fully hydrated), alpha is 0.0 (completely invisible red)
+-	# At 0.0 (max dehydrated), alpha is 1.0 (fully visible red overlay)
+-	var red_alpha: float = 1.0 - hydration_level
+-	# actual hydration * measurement = store in oasis
+-	SignalManager.save_to_oasis.emit(red_alpha)
+-	
+-	# Apply alpha to the red overlay
++	_last_applied_alpha = red_alpha
+ 	red_overlay.modulate.a = red_alpha
+-	if GameManager.saved_game:
+-		GameManager.saved_game.player_hydration = hydration_level
+diff --git a/resources/items/loot_table.gd b/resources/items/loot_table.gd
+index 0e9f0cf..af73346 100644
+--- a/resources/items/loot_table.gd
++++ b/resources/items/loot_table.gd
+@@ -1,14 +1,20 @@
+-extends Resource
+ class_name LootTable
+-
++extends Resource
+ 
+ @export var entries: Array[LootEntry] = []
+ 
+ 
++## Weighted pick. Returns null on an empty table rather than indexing off the end.
+ func roll() -> LootEntry:
++	if entries.is_empty():
++		return null
++
+ 	var total := 0
+ 	for e in entries:
+ 		total += e.weight
++	if total <= 0:
++		return entries[-1]
++
+ 	var pick := randi_range(1, total)
+ 	for e in entries:
+ 		pick -= e.weight
+@@ -16,17 +22,24 @@ func roll() -> LootEntry:
+ 			return e
+ 	return entries[-1]
+ 
++
++## Weighted pick restricted to [param minimum_rarity] or better.
++## Falls back to a normal roll if nothing in the table qualifies.
+ func roll_rarity_or_better(minimum_rarity: Item.RARITY) -> LootEntry:
++	if entries.is_empty():
++		return null
++
+ 	var total := 0
+ 	for e in entries:
+-		if e.item.rarity >= minimum_rarity:
++		if e.item and e.item.rarity >= minimum_rarity:
+ 			total += e.weight
+-	if total == 0:
+-		return roll()  # nothing qualifies; fall back
++	if total <= 0:
++		return roll()
++
+ 	var pick := randi_range(1, total)
+ 	for e in entries:
+-		if e.item.rarity >= minimum_rarity:
++		if e.item and e.item.rarity >= minimum_rarity:
+ 			pick -= e.weight
+ 			if pick <= 0:
+ 				return e
+-	return entries[-1]
++	return roll()
+diff --git a/resources/items/recipe_entry.gd b/resources/items/recipe_entry.gd
+index 9cff91a..a60e3f3 100644
+--- a/resources/items/recipe_entry.gd
++++ b/resources/items/recipe_entry.gd
+@@ -58,7 +58,7 @@ func refresh() -> void:
+ 				Color(0.4, 0.8, 0.5) if have >= ing.count else Color(0.524, 0.182, 0.154, 1.0))
+ 		ingredient_row.add_child(chip)
+ 	
+-	if recipe.output is ItemCosmetic and recipe.output in GameManager.owned_cosmetics:
++	if recipe.output is ItemCosmetic and recipe.output in GameManager.owned_cosmetics():
+ 		craft_button.text = "Owned"
+ 		craft_button.disabled = true
+ 		modulate.a = 0.75
+diff --git a/resources/jobs/GatherCactusApples.tres b/resources/jobs/GatherCactusApples.tres
+index 68f5339..c42ec23 100644
+--- a/resources/jobs/GatherCactusApples.tres
++++ b/resources/jobs/GatherCactusApples.tres
+@@ -8,6 +8,7 @@ script = ExtResource("1_re4mk")
+ name = "Gather Cactus Apples"
+ reward = ExtResource("1_q6xml")
+ reward_count = 5
+-job_length = 32
++water_goal_ml = 950.0
++notification_interval_min = 10
+ description = "A local delicacy. You may gather extra for yourself if you want. "
+ metadata/_custom_type_script = "uid://lpo0i6335001"
+diff --git a/resources/jobs/job.gd b/resources/jobs/job.gd
+index 1bb8f5e..384cf45 100644
+--- a/resources/jobs/job.gd
++++ b/resources/jobs/job.gd
+@@ -1,14 +1,30 @@
+-extends Resource
+ class_name Job
++extends Resource
++
++## A job is a gamified water goal: drink [member water_goal_ml] and you finish it.
++
++enum JOB_TYPE {
++	## Short outing, ~1 bottle. Accelerometer walk for bonus loot, boss minigame.
++	HUNT,
++	## The default. A regular day out, refills and bottle swaps expected.
++	QUEST,
++	## Full day, passive. For players who don't want to open the app much.
++	DELIVERY,
++}
+ 
+ @export var name: String = ""
++@export var job_type: JOB_TYPE = JOB_TYPE.QUEST
++@export_multiline var description: String = ""
++
++## How much water finishing this job takes, in ml.
++## (Roughly: HUNT ~500, QUEST ~1000, DELIVERY ~2500.)
++@export var water_goal_ml: float = 1000.0
++
++## Minutes between drink reminders while this job is active. The player
++## overrides this on the job board before accepting; 10 is the recommendation.
++@export_range(5, 240, 5) var notification_interval_min: int = 10
++
+ @export var reward: Item
+ @export_range(1, 99) var reward_count: int = 1
+-@export var job_length: int = 16
+-var job_progress:int = 0
+-
+-enum JOB_TYPE{HUNT, QUEST, DELIVERY}
+-@export var job_type:JOB_TYPE = JOB_TYPE.QUEST
+-@export_multiline var description:String = ""
+ 
+ @export var unlock_hint: String = ""
+diff --git a/resources/save_game.gd b/resources/save_game.gd
+index 1a2b820..87e8252 100644
+--- a/resources/save_game.gd
++++ b/resources/save_game.gd
+@@ -1,23 +1,64 @@
+-extends Resource
+ class_name SaveGame
++extends Resource
++
++## Everything that survives closing the app.
++##
++## IMPORTANT: only @export'ed properties are written by ResourceSaver. A plain
++## `var` here will silently vanish on save/load, which is what was happening to
++## this whole resource before.
++##
++## All water volumes are stored in millilitres.
++
++# --- Player profile -------------------------------------------------
++
++@export var username: String = "player"
++## Player weight in whichever unit [member weight_is_lb] selects.
++@export var weight: float = 170.0
++@export var weight_is_lb: bool = true
++## True once onboarding has been completed at least once.
++@export var previous_save: bool = false
++
++# --- Bottles --------------------------------------------------------
++
++@export var player_bottles: Array[BottleSize] = []
++@export var current_player_bottle_index: int = 0
++## Snapshots of each bottle the player finished today, for the end-of-day recap.
++@export var bottles_completed_today: Array[BottleSize] = []
++
++# --- Water totals (all ml) ------------------------------------------
++
++## Total drunk today. Reset by GameManager on day rollover.
++@export var daily_total_ml: float = 0.0
++## The player's own daily target, set during onboarding.
++@export var daily_goal_ml: float = 2500.0
++## Banked since the last oasis refill; spent as loot rolls when they cash out.
++@export var ml_since_last_oasis: float = 0.0
++## Drunk toward the current job's goal.
++@export var job_progress_ml: float = 0.0
++
++# --- Session / timing -----------------------------------------------
+ 
+-var username:String = "player"
+-var weight:int = 170
+-var weight_is_oz :bool = false
++## 0.0 = fully dehydrated (max red tint), 1.0 = fully hydrated.
++@export var player_hydration: float = 1.0
++## Unix timestamp of the last time the app was backgrounded.
++@export var previous_login: float = 0.0
++## Unix day index the daily totals belong to, so they reset at midnight.
++@export var current_day: int = 0
+ 
+-var player_inventory: InventoryData
+-var previous_save: bool = false
++# --- Where the player was -------------------------------------------
+ 
+-var player_bottles: Array[BottleSize] = [BottleSize.new()]
+-var current_player_bottle_index: int
++@export var current_screen: Screens.NAME = Screens.NAME.ROOM
++@export var previous_town: Screens.NAME = Screens.NAME.GUILD_HALL
++@export var current_job: Job = null
+ 
+-var player_hydration:float
+-var previous_login:float
+-var daily_hydration_total:float
+-var water_since_last_oasis:float = 0.0
+-var water_measurement_multiplier:float = 0.0
++# --- Progression ----------------------------------------------------
+ 
++## A snapshot of the player's bag. GameManager keeps the live InventoryData in
++## [constant GameManager.PLAYER_INVENTORY] (a res:// resource, which is
++## read-only once exported to Android), and mirrors it in and out of here.
++@export var player_inventory: InventoryData = null
+ 
+-var current_screen: GameManager.SCREEN_NAME = GameManager.SCREEN_NAME.ROOM
+-var current_job_state: Job
+-var previous_town: GameManager.SCREEN_NAME = GameManager.SCREEN_NAME.GUILD_HALL
++## Cosmetics moved here from GameManager so they actually persist.
++@export var owned_cosmetics: Array[ItemCosmetic] = []
++## ItemCosmetic.SLOT_TYPE -> ItemCosmetic
++@export var equipped: Dictionary = {}
+diff --git a/screens/guild_hall.gd b/screens/guild_hall.gd
+index 13199ca..b0ef832 100644
+--- a/screens/guild_hall.gd
++++ b/screens/guild_hall.gd
+@@ -1,38 +1,31 @@
+ extends Control
+ 
++## Where gameplay decisions get made.
+ 
+-#Buttons
+ @onready var stairs_button: TextureButton = %StairsButton
+ @onready var craft_clerk_button: TextureButton = %CraftClerkButton
+ @onready var shop_clerk_button: TextureButton = %ShopClerkButton
+ @onready var job_clerk_button: TextureButton = %JobClerkButton
+ 
+-#Menus
+ 
++## TODO: animations — people moving around the hall, clerks idling at their stalls.
+ 
+ 
+-##TODO
+-#Create Animations
+-#	People walking/interacting around the guild hall
+-#	Clerks doing idle animations at their stalls
++func _on_job_clerk_button_pressed() -> void:
++	SignalManager.toggle_job_board.emit()
+ 
+ 
++## The crafter. Their recipe list grows with job completion; the recipes bound
++## to the crafter themselves don't rotate, so progression is never lost.
++func _on_craft_clerk_button_pressed() -> void:
++	SignalManager.toggle_crafting.emit()
+ 
+-##TODO open a daily rotating shop menu
+-#-gets more inventory slots (aka more rolls for better shop options) with job completion
++
++## TODO: the material shop — daily rotating stock the player buys with materials.
++## Slot count grows with job completion. Not built yet.
+ func _on_shop_clerk_button_pressed() -> void:
+ 	pass
+ 
+ 
+-func _on_job_clerk_button_pressed() -> void:
+-	SignalManager.toggle_job_board.emit()
+-
+-##TODO open the daily rotating crafter menu
+-#-gets more recipe slots with job completion
+-#-the recipes attached to the crafter themselves don't rotate so progression isn't lost
+-func _on_craft_clerk_button_pressed() -> void:
+-	SignalManager.toggle_shop.emit()
+-
+-
+ func _on_stairs_button_pressed() -> void:
+-	get_tree().change_scene_to_file("res://screens/room.tscn")
++	GameManager.go_to(Screens.NAME.ROOM)
+diff --git a/screens/journey.gd b/screens/journey.gd
+index e77c030..2617fb9 100644
+--- a/screens/journey.gd
++++ b/screens/journey.gd
+@@ -1,25 +1,36 @@
+ extends Control
+ 
++## The main "on a journey" splash screen. The drink button itself lives in the
++## global Ui layer; this screen owns the oasis mirage.
+ 
+-##TODO this should be a splash screen with some animations
+-##possibly some easter egg animated buttons occasionally for a very minor item drop
++## The mirage fades in as the current bottle empties. It is deliberately vague —
++## we only ever estimate how much the player actually drank, so the player is
++## the one who decides when the bottle is really done.
++const MIRAGE_MIN_ALPHA := 0.12
++const MIRAGE_MAX_ALPHA := 1.0
+ 
++@onready var oasis_mirage_button: TextureButton = $PanelContainer/OasisMirageButton
+ 
+ 
++func _ready() -> void:
++	SignalManager.bottle_progress_updated.connect(_on_bottle_progress)
++	_refresh_mirage()
+ 
+-##TODO handle random events here?
+-func job_event_happened() -> void:
+-	pass
+ 
+-##TODO biggest feature of journey screen is the refill texture button.
+-##This feature should also be on other screens somehow, probably auto refill canteen as you are in town
+-## - And changing bottles in settings is also available
+-## this texture button is here for game feel. So it feels like the player accomplished something for more bottle completion
+-func closer_to_oasis() -> void:
+-	pass
++func _on_bottle_progress(_current_drunk_ml: float, _volume_ml: float) -> void:
++	_refresh_mirage()
+ 
+ 
++func _refresh_mirage() -> void:
++	var ratio := clampf(GameManager.current_bottle().fill_ratio(), 0.0, 1.0)
++	oasis_mirage_button.modulate.a = lerpf(MIRAGE_MIN_ALPHA, MIRAGE_MAX_ALPHA, ratio)
+ 
+ 
+ func _on_oasis_mirage_button_pressed() -> void:
+-	get_tree().change_scene_to_packed(GameManager.SCREENS[GameManager.SCREEN_NAME.OASIS])
++	GameManager.go_to(Screens.NAME.OASIS)
++
++
++## TODO: random journey events (nothing / free loot / minigame), rolled when a
++## scheduled notification fires. See NotificationManager.
++func job_event_happened() -> void:
++	pass
+diff --git a/screens/main.gd b/screens/main.gd
+index ac6f990..a84f22f 100644
+--- a/screens/main.gd
++++ b/screens/main.gd
+@@ -1,15 +1,17 @@
+ extends Control
+ 
+-const ONBOARDING: PackedScene = preload("uid://0h004cby31ql")
++## Boot screen. Routes to onboarding on a first run, otherwise back to wherever
++## the player left off. Onboarding is intentionally not in the Screens registry:
++## nothing should ever route back to it.
+ 
++const ONBOARDING: PackedScene = preload("uid://0h004cby31ql")
+ 
+ 
+ func _ready() -> void:
+ 	await get_tree().process_frame
+-	
++
+ 	if GameManager.saved_game.previous_save:
+-		get_tree().change_scene_to_packed(
+-			GameManager.SCREENS[GameManager.saved_game.current_screen]
+-			)
++		GameManager.go_to(GameManager.saved_game.current_screen)
+ 	else:
++		Ui.hide()
+ 		get_tree().change_scene_to_packed(ONBOARDING)
+diff --git a/screens/oasis.gd b/screens/oasis.gd
+index ce7d8b2..c9355a5 100644
+--- a/screens/oasis.gd
++++ b/screens/oasis.gd
+@@ -1,8 +1,11 @@
+ extends Control
+ 
++## Refilling the bottle. This is the player declaring "that bottle is done",
++## which banks it and cashes out the water drunk since the last refill.
++
+ 
+ func _on_oasis_pool_button_pressed() -> void:
+ 	SignalManager.bottle_completed.emit()
+-	##Reward panel for 'completing' a bottle
+-	##Then ask the player if they want to refill the bottle? or just auto refill and go back to journey?
+-	get_tree().change_scene_to_packed(GameManager.SCREENS[GameManager.SCREEN_NAME.JOURNEY])
++	# TODO: show the reward panel here before leaving, instead of dropping the
++	# player straight back onto the journey screen.
++	GameManager.go_to(Screens.NAME.JOURNEY)
+diff --git a/screens/onboarding.gd b/screens/onboarding.gd
+index 4688237..9ba5e0a 100644
+--- a/screens/onboarding.gd
++++ b/screens/onboarding.gd
+@@ -1,14 +1,18 @@
+ extends Control
++
++## First-run setup. Reached exactly once, straight from main.gd, and never
++## routed back to — which is why it has no entry in the Screens registry.
++
+ @onready var bottle_bar: TabBar = %BottleBar
+ @onready var tab_container: TabContainer = %TabContainer
+ 
+ 
+ func _ready() -> void:
+ 	Ui.hide()
+-	SignalManager.bottle_size_selected.connect(_pass_onboarding)
+-	#bottle_bar.hide()
++	SignalManager.bottle_size_selected.connect(_finish_onboarding)
++
+ 
+-func _pass_onboarding(_bottle, _isTrue)->void:
++func _finish_onboarding(_bottle: BottleSize, _keep_progress: bool) -> void:
+ 	Ui.show()
+-	get_tree().change_scene_to_packed(GameManager.SCREENS[GameManager.SCREEN_NAME.GUILD_HALL])
+-	
++	GameManager.save()  # flips previous_save, so this scene is never seen again
++	GameManager.go_to(Screens.NAME.GUILD_HALL)
+diff --git a/screens/quest_goal.gd b/screens/quest_goal.gd
+index e07a0bf..41de539 100644
+--- a/screens/quest_goal.gd
++++ b/screens/quest_goal.gd
+@@ -1 +1,20 @@
+ extends Control
++
++## Shown when a job's water goal is met.
++##
++## TODO: this scene is still an empty Control. It needs the reward readout that
++## was promised on the job board, plus the "journey back" / "return to town"
++## choice. Wire whichever button you add to return_to_town().
++
++
++func _ready() -> void:
++	SignalManager.job_completed.connect(_on_job_completed)
++
++
++func _on_job_completed(job: Job) -> void:
++	# TODO: populate a reward panel from job.reward / job.reward_count.
++	pass
++
++
++func return_to_town() -> void:
++	GameManager.go_to(GameManager.saved_game.previous_town)
+diff --git a/screens/room.gd b/screens/room.gd
+index 8f9ef26..799e2fd 100644
+--- a/screens/room.gd
++++ b/screens/room.gd
+@@ -1,13 +1,10 @@
+ extends Control
+ 
+-#const JOURNEY = preload("uid://bcrwp75bbkcex")
+-const GUILD_HALL = preload("uid://c7s4iwhklo8kd")
++## TODO swap between different idle animations depending on room furniture:
++##   RestSpot - sleep on bed, relax on beanbag
++##   WorkSpot - study at desk, whittle wood at table
++##   FunSpot  - handheld console on the floor, read a book in the chair
+ 
+-##TODO swap between different idle animations depending on room furniture
+-## RestSpot has stuff like sleep on bed, relax on beanbag, etc.
+-## WorkSpot - Study at desk, Whittle wood at table, etc.
+-## FunSpot - Handheld video game console on ground, Read book on chair, etc. 
+ 
+ func _on_button_pressed() -> void:
+-	get_tree().change_scene_to_packed(GUILD_HALL)
+-	
++	GameManager.go_to(Screens.NAME.GUILD_HALL)
+diff --git a/screens/screens.gd b/screens/screens.gd
+new file mode 100644
+index 0000000..3d290f2
+--- /dev/null
++++ b/screens/screens.gd
+@@ -0,0 +1,33 @@
++class_name Screens
++extends RefCounted
++
++## Central registry of every full-screen scene in the game.
++##
++## This lives outside GameManager so that other scripts — SaveGame in
++## particular — can refer to [enum Screens.NAME] as a real type. An autoload
++## singleton is an object, not a type, so `GameManager.SCREEN_NAME` cannot be
++## used in an @export declaration.
++##
++## Onboarding is deliberately absent: it is reached exactly once, directly from
++## main.gd, and nothing should ever route back to it.
++
++enum NAME {
++	ROOM,
++	JOURNEY,
++	OASIS,
++	GUILD_HALL,
++	QUEST_GOAL,
++	SCORPION_NEST_MG,
++}
++
++const PACKED := {
++	NAME.ROOM: preload("res://screens/room.tscn"),
++	NAME.JOURNEY: preload("res://screens/journey.tscn"),
++	NAME.OASIS: preload("res://screens/oasis.tscn"),
++	NAME.GUILD_HALL: preload("res://screens/guild_hall.tscn"),
++	NAME.QUEST_GOAL: preload("res://screens/quest_goal.tscn"),
++	NAME.SCORPION_NEST_MG: preload("res://minigames/scorpion_nest_mg.tscn"),
++}
++
++## Screens the player can be sent "home" to after a job ends.
++const TOWNS: Array[NAME] = [NAME.ROOM, NAME.GUILD_HALL]
+diff --git a/scripts/bottle_size.gd b/scripts/bottle_size.gd
+index 66702b8..7f1e46d 100644
+--- a/scripts/bottle_size.gd
++++ b/scripts/bottle_size.gd
+@@ -1,9 +1,52 @@
+ class_name BottleSize
+ extends Resource
+ 
++## A single drinking vessel the player owns.
++##
++## ALL volumes are stored in millilitres. [member measurement] is a display
++## preference only — it never changes what is stored, just how it is shown.
++
++enum MEASUREMENT { OZ, ML }
++
++const ML_PER_OZ := 29.5735
++
+ @export var label: String = "Medium"
+-@export var total_volume_ml: float = 16.0
+-@export var current_drunk:float = 0
+ 
+-enum MEASUREMENT {OZ, ML}
+-@export var measurement = MEASUREMENT.ML
++## Capacity of this bottle, in ml. (500 ml ~ a typical 16.9 oz bottle.)
++@export var volume_ml: float = 500.0
++
++## Estimated amount drunk from this bottle since it was last filled, in ml.
++@export var current_drunk_ml: float = 0.0
++
++## Display unit only. Does not affect any stored value.
++@export var measurement: MEASUREMENT = MEASUREMENT.ML
++
++
++## How full the bottle is estimated to be, 0.0 (fresh) to 1.0 (about empty).
++## This is an estimate built from sip counts, so callers should treat it as
++## a hint for visuals rather than a hard truth.
++func fill_ratio() -> float:
++	if volume_ml <= 0.0:
++		return 0.0
++	return current_drunk_ml / volume_ml
++
++
++## Convert an internal ml value into the player's chosen display unit.
++func to_display(ml: float) -> float:
++	return ml / ML_PER_OZ if measurement == MEASUREMENT.OZ else ml
++
++
++## Convert a number the player typed in their chosen unit back into ml.
++func from_display(value: float) -> float:
++	return value * ML_PER_OZ if measurement == MEASUREMENT.OZ else value
++
++
++func unit_suffix() -> String:
++	return "oz" if measurement == MEASUREMENT.OZ else "ml"
++
++
++## Format an ml value for the UI, e.g. "16.9 oz" or "500 ml".
++func format_volume(ml: float) -> String:
++	if measurement == MEASUREMENT.OZ:
++		return "%.1f oz" % to_display(ml)
++	return "%d ml" % roundi(ml)
+diff --git a/scripts/game_manager.gd b/scripts/game_manager.gd
+index 8440dab..bbbf8e1 100644
+--- a/scripts/game_manager.gd
++++ b/scripts/game_manager.gd
+@@ -1,106 +1,60 @@
+ extends Node
+ 
++## Autoload. Owns the water model, the save file, and screen transitions.
++##
++## UNITS: every water volume in this game is millilitres. BottleSize.measurement
++## is a display preference and is applied only at the UI layer.
++##
++## Design notes that used to live at the top of this file have moved to
++## docs/design_notes.md so the code reads as code.
++
++# --- Constants ------------------------------------------------------
++
++const PLAYER_INVENTORY: InventoryData = preload("uid://bmeja72l4gf4g")
++const SAVE_PATH := "user://save.tres"
+ 
+-##oz in a sip is about 0.2-0.5
+-## so use that as a rough estimate and then get better calcs off user data
+-
+-## NEW PLAYER SETUP
+-## Player chooses an avatar (adventurer/merchant/etc.) - stretch goal
+-## Player gives weight OR can skip
+-## Player sets hydration goal (offer an estimate based on weight) (avg 3 l.)
+-## Player sets bottle size for first bottle
+-## Player chooses liquid (water, juice, milk, etc. for efficiency towards hydration goal)
+-
+-## Notes
+-## --Player can have up to 5? bottles sizes that they can equip to drink from 
+-## --can also create, modify, or delete bottles during game
+-## --can also remove bottles:
+-## --clear the bottle resource if dumped the rest
+-## --save bottle progress if simply swapping bottles/cups for a meal by putting in inventory
+-
+-## Intro Run - Fine tune but this is stretch goal
+-## After new player setup ->
+-## Player starts off in middle of quest?
+-
+-## GAMEPLAY LOOP
+-## Player starts in their room
+-## Player leaves their room by clicking the stairs texture button
+-## Player clicks on the job clerk texture button
+-## Player clicks on a job option in the job menu popup (short medium long with a hydration goal preset but can be manually changed)
+-## -- Long = delivery has check box for no minigames - casual
+-## -- Med = quest is average minigames - engaged gameplay
+-## -- Short = hunt has boss minigame at end, but requires accelerometer run for bigger monster & loot
+-## ------- Also on side can spin box select notification interval (recommend 10 min)
+-## ------- Also can end a job whenever they want, for remaining time reduced rewards
+-## After selecting job option, player selects themed job (ex. harvest Amber Cactus which is a 1 bottle quest)
+-## OR can select custom job if they just want to select their own bottle amount with default theming (oasis at end) - Not sure if this is a needed option
+-## Player Character sets out and is on journey screen (splash screen w/ anim and occasional tips)
+-## Player gets notification at chosen intervals
+-## - Notifications (all remind to drink water by clicking the canteen texture button):
+-## --- critter/scenery animation on journey screen
+-## --- minigame (which may be saved for later or skipped for average loot)
+-## --- free loot (discovered a hidden cache)
+-## --- other???
+-## ----- The longer the player takes to click the drink button, the character gets a redder tint to show sun dmg, which disipates partially for each click of the drink button
+-## if player finished bottle: refill 'canteen' at oasis-> oasis texture button (oasis mirage) that becomes more opaque the closer it is to the estimated amount of sips for their bottle
+-## --- Show player oasis (bottle/canteen refill) screen
+-## --- Once player refills they essentially 'cash out' of their current progress (with a roll based on how many notifications done (roll per notify) (so its time gated and encourages sips) on oasis loot table)
+-## Once the day is finished, player ends job, or the player hydration goal is reached
+-## -- Show player each canteen that they finished as a way to reward their progress by showing what they have accomplished
+-
+-
+-const PLAYER_INVENTORY: InventoryData = preload("uid://bmeja72l4gf4g") ##instead leave null or a new one? let load handle this?
+-const SAVE_PATH:= "user://save.tres"
+-
+-var saved_game:SaveGame = null
+-
+-##Screens
+-enum SCREEN_NAME{
+-	ROOM, JOURNEY, OASIS, GUILD_HALL, SCORPION_NEST_MG
+-}
+-const SCREENS := {
+-	SCREEN_NAME.ROOM: preload("res://screens/room.tscn"),
+-	SCREEN_NAME.JOURNEY: preload("res://screens/journey.tscn"),
+-	SCREEN_NAME.OASIS: preload("res://screens/oasis.tscn"),
+-	SCREEN_NAME.GUILD_HALL: preload("res://screens/guild_hall.tscn"),
+-	SCREEN_NAME.SCORPION_NEST_MG: preload("res://minigames/scorpion_nest_mg.tscn")
+-}
+-
+-
+-
+-## Player Inventory Stuff
+-var owned_cosmetics: Array[ItemCosmetic] = []
+-var equipped: Dictionary = {}  # SLOT_TYPE -> ItemCosmetic?
+-
+-
+-#percentages/count for UI
+-var bottles_completed_today:Array[BottleSize] = [BottleSize.new()]
+-var total_current_water_intake: float = 0.0		# in ML
+-var day_intake_goal: float = 2500.0				#ML
+-var oasis_ml_per_roll := 250.0
+-const DAY_ML := 2500.0
+ const ML_PER_OZ := 29.5735
++const KG_PER_LB := 0.4536
++
++## Estimated volume of one sip. The player's notes put a sip at 0.2-0.5 oz;
++## 15 ml is the middle of that. Everything downstream is an estimate built on
++## this, which is why bottle progress is shown vaguely rather than as a number.
++const DEFAULT_SIP_ML := 15.0
++
++## One oasis loot roll is earned per this much water banked since the last refill.
++const OASIS_ML_PER_ROLL := 250.0
++
++## Drinking more than this inside [constant OVERDRINK_WINDOW_SEC] is unsafe and
++## should be discouraged rather than rewarded.
++const OVERDRINK_WARN_ML := 800.0
++const OVERDRINK_WINDOW_SEC := 3600.0
++
++const SECONDS_PER_DAY := 86400
++
++# --- State ----------------------------------------------------------
++
++var saved_game: SaveGame = null
++
++## Rolling log of (unix_time, ml) sips, used only for the overdrink check.
++var _recent_sips: Array[Vector2] = []
++
++## Guards the daily-goal celebration so it only fires once per day.
++var _daily_goal_announced := false
+ 
+-const RECOMMENDED_WATER_INTAKE_ML_OVER_FOUR_HOURS:float = 6 #NEEDS_TO_BE_MULTIPLIED_BY_WEIGHT
+-const KG_PER_LB:float = 0.4536
+-const WHEN_TO_WARN_PLAYER_TOO_MUCH_WATER_ML:float = 800
+ 
+ func _ready() -> void:
++	_load_or_create_save()
++
+ 	SignalManager.bottle_size_selected.connect(change_bottle_size)
+ 	SignalManager.water_drunk.connect(drink)
++	# The oasis pool button emits this. Previously nothing listened, so
++	# refilling gave no reward and never banked the bottle.
++	SignalManager.bottle_completed.connect(refill_at_oasis)
+ 	SignalManager.job_accepted.connect(start_job)
+ 	SignalManager.job_canceled.connect(cancel_job)
+-	SignalManager.save_to_oasis.connect(update_oasis_total)
+-	
+-	if ResourceLoader.exists(SAVE_PATH):
+-		saved_game = ResourceLoader.load(SAVE_PATH, "", ResourceLoader.CACHE_MODE_IGNORE)
+-	else:
+-		saved_game = SaveGame.new()
+-		
+ 
+ 
+-
+-# Catch mobile app backgrounding and resuming
++# Catch mobile app backgrounding and resuming.
+ func _notification(what: int) -> void:
+ 	match what:
+ 		NOTIFICATION_APPLICATION_PAUSED:
+@@ -109,177 +63,259 @@ func _notification(what: int) -> void:
+ 		NOTIFICATION_APPLICATION_RESUMED:
+ 			load_data()
+ 
+-func save()->void:
++
++# --- Save / load ----------------------------------------------------
++
++func _load_or_create_save() -> void:
++	if ResourceLoader.exists(SAVE_PATH):
++		saved_game = ResourceLoader.load(SAVE_PATH, "", ResourceLoader.CACHE_MODE_IGNORE)
++	if saved_game == null:
++		saved_game = SaveGame.new()
++	if saved_game.player_bottles.is_empty():
++		saved_game.player_bottles.append(BottleSize.new())
++	_restore_inventory()
++	_roll_over_day_if_needed()
++
++
++func save() -> void:
++	saved_game.previous_save = true
++	saved_game.player_inventory = PLAYER_INVENTORY.duplicate(true)
+ 	ResourceSaver.save(saved_game, SAVE_PATH)
+ 
+-func load_data()->void:
++
++func load_data() -> void:
++	var loaded: SaveGame = ResourceLoader.load(SAVE_PATH, "", ResourceLoader.CACHE_MODE_IGNORE)
++	if loaded == null:
++		return
++	saved_game = loaded
++	_restore_inventory()
++	_roll_over_day_if_needed()
+ 	Ui.player_character.apply_decay()
+-	##TODO also update current player data with saved data
+-	saved_game = ResourceLoader.load(SAVE_PATH, "", ResourceLoader.CACHE_MODE_IGNORE)
+-	
+-	
+ 
+ 
+-###BOTTLE STUFF
++## Copy the saved bag back into the live res:// inventory resource, so every
++## existing reference to PLAYER_INVENTORY keeps working.
++func _restore_inventory() -> void:
++	if saved_game.player_inventory == null:
++		return
++	PLAYER_INVENTORY.slot_datas = saved_game.player_inventory.slot_datas.duplicate(true)
++	PLAYER_INVENTORY.inventory_updated.emit(PLAYER_INVENTORY)
+ 
+-##Changes current bottle's size
+-func change_bottle_size(bottle_given:BottleSize, keep_current:bool)->void:
+-	var temp_holding:=saved_game.player_bottles[saved_game].current_drunk
+-	saved_game.player_bottles[saved_game.current_player_bottle_index] = bottle_given
+-	if keep_current:
+-		saved_game.player_bottles[saved_game.current_player_bottle_index].current_drunk = temp_holding
+-	
+-	save()
+ 
+-##Reduce remaining in current bottle, [br]increase daily hydration, [br]check if goal reached
+-func drink(amount: float = 12) -> void: #0.5 in oz
+-	Ui.player_character.drank_water()
+-	
+-	var bottle:=saved_game.player_bottles[saved_game.current_player_bottle_index]
+-	bottle.current_drunk += amount
+-	saved_game.daily_hydration_total += amount 
+-	# this is just an estimate so player sees progression, actual should be in complete bottle
+-	
+-	
+-	Ui._update(saved_game.daily_hydration_total)
+-	
+-	var total_volume:float = bottle.total_volume_ml if bottle.measurement == BottleSize.MEASUREMENT.ML else bottle.total_volume_ml * ML_PER_OZ
+-	#SignalManager.bottle_progress_updated.emit(bottle.current_drunk, total_volume)
+-	
+-
+-##Update canteens finished and give rewards
+-func _complete_bottle() -> void:
+-	bottles_completed_today.append(saved_game.player_bottles[saved_game.current_player_bottle_index])
+-
+-	#SignalManager.bottle_completed.emit() 
+-	##what scenes need to know bottle was completed? Could this just be in GM
+-	##even if other scripts need to know, maybe best for gm to manage this
+-	
+-	##should be based off total water drunk and time gated to a degree
+-	var loot := LootTables.roll(LootTables.TABLES.NEST_MG)#TODO placeholder loot table
+-	if loot and PLAYER_INVENTORY.pickup_slot_data(loot):
+-		#SignalManager.loot_granted.emit(loot)
+-		PLAYER_INVENTORY.pickup_slot_data(loot)
+-	# else: inventory full — decide whether to queue it or auto-expand
+-	
+-	_add_up_water()
+-	
+-	##Ask the player if they want to refill or swap bottles
++## Zero the daily counters when the calendar day changes.
++func _roll_over_day_if_needed() -> void:
++	var today := int(Time.get_unix_time_from_system()) / SECONDS_PER_DAY
++	if saved_game.current_day == today:
++		return
++	saved_game.current_day = today
++	saved_game.daily_total_ml = 0.0
++	saved_game.bottles_completed_today.clear()
++	_daily_goal_announced = false
+ 
+-##
+-func _refill_bottle() -> void:
+-	saved_game.player_bottles[saved_game.current_player_bottle_index].current_drunk = 0
+-	#match saved_game.player_bottles[current_bottle_index].measurement:
+-		#BottleSize.MEASUREMENT.ML:
+-			#
+-		#BottleSize.MEASUREMENT.OZ:
+-			#player_bottles[current_bottle_index].current_drunk = 0
+-	
+-	
+ 
+-##
+-func _add_up_water() -> void:
+-	
+-	match saved_game.player_bottles[saved_game.current_player_bottle_index].measurement:
+-		BottleSize.MEASUREMENT.ML:
+-			total_current_water_intake += saved_game.player_bottles[saved_game.current_player_bottle_index].total_volume_ml
+-		BottleSize.MEASUREMENT.OZ:
+-			total_current_water_intake += saved_game.player_bottles[saved_game.current_player_bottle_index].total_volume_oz * ML_PER_OZ
+-	
+-	
+-	if saved_game.daily_hydration_total >= day_intake_goal:
+-		_complete_day()
+-	
++# --- Bottles --------------------------------------------------------
+ 
++## The bottle the player is currently drinking from. Always returns something.
++func current_bottle() -> BottleSize:
++	if saved_game.player_bottles.is_empty():
++		saved_game.player_bottles.append(BottleSize.new())
++	saved_game.current_player_bottle_index = clampi(
++		saved_game.current_player_bottle_index, 0, saved_game.player_bottles.size() - 1
++	)
++	return saved_game.player_bottles[saved_game.current_player_bottle_index]
+ 
+-func update_oasis_total(player_hydration_tint_change:float)->void:
+-	saved_game.water_since_last_oasis = \
+-	player_hydration_tint_change * \
+-	RECOMMENDED_WATER_INTAKE_ML_OVER_FOUR_HOURS * \
+-	saved_game.weight
+ 
++## Swap the current bottle for a different one.
++## [param keep_progress] carries the sips already logged across to the new
++## bottle — for swapping vessels mid-drink rather than starting fresh.
++func change_bottle_size(bottle_given: BottleSize, keep_progress: bool) -> void:
++	var carried := current_bottle().current_drunk_ml
++	saved_game.player_bottles[saved_game.current_player_bottle_index] = bottle_given
++	bottle_given.current_drunk_ml = carried if keep_progress else 0.0
++	save()
+ 
+-# always roll for loot even if self set goal not complete
+-func _complete_day() -> void:
+-	SignalManager.day_completed.emit(bottles_completed_today)#not connected yet, prob to ui
+ 
++# --- Drinking -------------------------------------------------------
+ 
++## Log one sip. Everything water-related flows through here.
++func drink(amount_ml: float = DEFAULT_SIP_ML) -> void:
++	var bottle := current_bottle()
++	bottle.current_drunk_ml += amount_ml
++	saved_game.daily_total_ml += amount_ml
++	saved_game.ml_since_last_oasis += amount_ml
++	if saved_game.current_job:
++		saved_game.job_progress_ml += amount_ml
+ 
++	Ui.player_character.drank_water()
++	SignalManager.bottle_progress_updated.emit(bottle.current_drunk_ml, bottle.volume_ml)
++
++	if _is_overdrinking(amount_ml):
++		SignalManager.overdrink_warning.emit(OVERDRINK_WARN_ML)
++
++	_check_daily_goal()
++	_check_job_goal()
+ 
+-func start_job(job: Job) -> void:
+-	saved_game.current_job_state = job
+-	get_tree().change_scene_to_packed(SCREENS[SCREEN_NAME.JOURNEY])
+ 
+-func completed_job(_job:Job) -> void:
+-	pass
++## The player's own daily target is separate from any job goal — hitting it is
++## a congratulation, not a scene change.
++func _check_daily_goal() -> void:
++	if _daily_goal_announced:
++		return
++	if saved_game.daily_total_ml >= saved_game.daily_goal_ml:
++		_daily_goal_announced = true
++		SignalManager.daily_goal_reached.emit(saved_game.bottles_completed_today)
+ 
+-func cancel_job(_job:Job) -> void:
+-	get_tree().change_scene_to_packed(SCREENS[saved_game.previous_town])
+-	saved_game.current_job_state = null
+ 
++## True if the player has crossed the safe intake rate in the recent window.
++func _is_overdrinking(amount_ml: float) -> bool:
++	var now := Time.get_unix_time_from_system()
++	_recent_sips.append(Vector2(now, amount_ml))
++	var total := 0.0
++	var kept: Array[Vector2] = []
++	for sip in _recent_sips:
++		if now - sip.x <= OVERDRINK_WINDOW_SEC:
++			kept.append(sip)
++			total += sip.y
++	_recent_sips = kept
++	return total > OVERDRINK_WARN_ML
+ 
+ 
++# --- Oasis ----------------------------------------------------------
+ 
++## The player decided this bottle is done and refilled at the oasis.
++## Banks the bottle, pays out the water drunk since the last refill, resets it.
++func refill_at_oasis() -> void:
++	var bottle := current_bottle()
++	saved_game.bottles_completed_today.append(bottle.duplicate())
+ 
++	var earned := _oasis_cash_out()
++
++	bottle.current_drunk_ml = 0.0
++	save()
++
++	SignalManager.oasis_reward_granted.emit(earned)
++	SignalManager.bottle_progress_updated.emit(0.0, bottle.volume_ml)
+ 
+ 
+-func oasis_cash_out() -> Array[Item]:
+-	var roll_count := int(saved_game.water_since_last_oasis / oasis_ml_per_roll)
++## Spend the banked water on loot rolls. One roll per OASIS_ML_PER_ROLL.
++func _oasis_cash_out() -> Array[Item]:
++	var roll_count := int(saved_game.ml_since_last_oasis / OASIS_ML_PER_ROLL)
+ 	var loot_earned: Array[Item] = []
+-	
+-	for i in roll_count:
++
++	for _i in roll_count:
+ 		var slot_data := LootTables.roll(LootTables.TABLES.OASIS)
+ 		if slot_data == null:
+ 			continue
++		if not PLAYER_INVENTORY.pickup_slot_data(slot_data):
++			break  # bag is full; stop rolling rather than silently dropping loot
+ 		loot_earned.append(slot_data.item_data)
+-		PLAYER_INVENTORY.pickup_slot_data(slot_data)
+-	
+-	saved_game.water_since_last_oasis = 0.0
+-	SignalManager.oasis_reward_granted.emit(loot_earned)
++
++	saved_game.ml_since_last_oasis = 0.0
+ 	return loot_earned
+ 
+ 
++# --- Jobs -----------------------------------------------------------
++
++func start_job(job: Job) -> void:
++	saved_game.current_job = job
++	saved_game.job_progress_ml = 0.0
++	NotificationManager.start_job_reminders(job.notification_interval_min)
++	go_to(Screens.NAME.JOURNEY)
++
++
++func cancel_job(_job: Job) -> void:
++	# TODO: pay out reduced rewards for the portion completed.
++	saved_game.current_job = null
++	NotificationManager.stop_job_reminders()
++	go_to(saved_game.previous_town)
++
+ 
++func _check_job_goal() -> void:
++	var job := saved_game.current_job
++	if job == null:
++		return
++	if saved_game.job_progress_ml >= job.water_goal_ml:
++		complete_job()
++
++
++func complete_job() -> void:
++	var job := saved_game.current_job
++	if job == null:
++		return
++
++	saved_game.current_job = null
++	NotificationManager.stop_job_reminders()
++
++	if job.reward:
++		PLAYER_INVENTORY.pickup_slot_data(SlotData.from_item(job.reward, job.reward_count))
++
++	SignalManager.job_completed.emit(job)
++	go_to(Screens.NAME.QUEST_GOAL)
++
++
++# --- Screens --------------------------------------------------------
++
++## Single entry point for changing screens. Records where the player is so a
++## cold start can put them back there.
++func go_to(screen: Screens.NAME) -> void:
++	saved_game.current_screen = screen
++	if screen in Screens.TOWNS:
++		saved_game.previous_town = screen
++	save()
++	get_tree().change_scene_to_packed(Screens.PACKED[screen])
++
++
++# --- Crafting -------------------------------------------------------
++
++## Returns false (and consumes nothing) if the player can't afford the recipe
++## or has no room for the result.
+ func craft(recipe: Recipe) -> bool:
+-	if not PLAYER_INVENTORY.consume(recipe):
++	if not PLAYER_INVENTORY.can_afford(recipe):
+ 		return false
+-	
++	PLAYER_INVENTORY.consume(recipe)
++
+ 	if recipe.output is ItemCosmetic:
+ 		own_cosmetic(recipe.output)
+ 		SignalManager.cosmetic_crafted.emit(recipe.output)
+ 	else:
+ 		var result := SlotData.from_item(recipe.output, recipe.output_count)
+ 		if not PLAYER_INVENTORY.pickup_slot_data(result):
+-			_refund(recipe)  # inventory full — undo the consume
++			_refund(recipe)
+ 			return false
+ 		SignalManager.item_crafted.emit(recipe.output, recipe.output_count)
+-	
++
++	save()
+ 	return true
+ 
++
+ func _refund(recipe: Recipe) -> void:
+ 	for ing in recipe.ingredients:
+ 		PLAYER_INVENTORY.pickup_slot_data(SlotData.from_item(ing.material, ing.count))
+ 
+ 
++# --- Cosmetics ------------------------------------------------------
+ 
+-
+-
+-
+-##Add to player wardrobe or return false if already in wardrobe
++## Add to the player's wardrobe. Returns false if it was already owned.
+ func own_cosmetic(item: ItemCosmetic) -> bool:
+-	if item in owned_cosmetics:
++	if item in saved_game.owned_cosmetics:
+ 		return false
+-	owned_cosmetics.append(item)
+-	#equip(item)  # auto-equip on craft feels rewarding; remove if you prefer not
++	saved_game.owned_cosmetics.append(item)
+ 	return true
+ 
+-func equip(item: ItemCosmetic) -> void:
+-	if equipped.get(item.slot_type) == item:
+-		equipped.erase(item.slot_type)
+-	else:
+-		equipped[item.slot_type] = item
+-	SignalManager.cosmetic_equipped.emit(item.slot_type, equipped.get(item.slot_type))
+ 
++func owned_cosmetics() -> Array[ItemCosmetic]:
++	return saved_game.owned_cosmetics
++
++
++func equipped_in(slot_type: ItemCosmetic.SLOT_TYPE) -> ItemCosmetic:
++	return saved_game.equipped.get(slot_type)
+ 
+-#func _process(delta: float) -> void:
+-	#pass
++
++## Equip, or unequip if this exact item is already in the slot.
++func equip(item: ItemCosmetic) -> void:
++	if saved_game.equipped.get(item.slot_type) == item:
++		saved_game.equipped.erase(item.slot_type)
++	else:
++		saved_game.equipped[item.slot_type] = item
++	SignalManager.cosmetic_equipped.emit(item.slot_type, saved_game.equipped.get(item.slot_type))
++	save()
+diff --git a/scripts/loot_tables.gd b/scripts/loot_tables.gd
+index 01809f4..3c162dd 100644
+--- a/scripts/loot_tables.gd
++++ b/scripts/loot_tables.gd
+@@ -1,28 +1,39 @@
+ extends Node
+ 
+-enum TABLES {NEST_MG, OASIS}
++## Autoload. Wraps the loot tables and applies pity so a dry streak ends.
++
++enum TABLES { NEST_MG, OASIS }
++
++## Rolls without a rare-or-better before one is guaranteed.
++const PITY_THRESHOLD := 25
+ 
+ var _tables := {
+ 	TABLES.NEST_MG: preload("res://resources/loot_tables/ScorpionNestLT.tres"),
+-	TABLES.OASIS: preload("res://resources/loot_tables/OasisLT.tres")
++	TABLES.OASIS: preload("res://resources/loot_tables/OasisLT.tres"),
+ }
+ 
+ var _rolls_since_rare := 0
+-@export var pity := 25
+ 
++
++## Returns null if the table is missing or empty; callers must handle that.
+ func roll(table_name: TABLES) -> SlotData:
+ 	var table: LootTable = _tables.get(table_name)
+-
+ 	if table == null:
+ 		push_error("Unknown loot table: %s" % table_name)
+ 		return null
+-	
++
+ 	var entry := table.roll()
++	if entry == null or entry.item == null:
++		return null
++
+ 	if entry.item.rarity >= Item.RARITY.RARE:
+ 		_rolls_since_rare = 0
+ 	else:
+ 		_rolls_since_rare += 1
+-		if _rolls_since_rare >= pity:
+-			entry = table.roll_rarity_or_better(Item.RARITY.RARE)
++		if _rolls_since_rare >= PITY_THRESHOLD:
++			var upgraded := table.roll_rarity_or_better(Item.RARITY.RARE)
++			if upgraded and upgraded.item:
++				entry = upgraded
+ 			_rolls_since_rare = 0
++
+ 	return SlotData.from_item(entry.item, randi_range(entry.min_count, entry.max_count))
+diff --git a/scripts/notification_manager.gd b/scripts/notification_manager.gd
+index e7165a0..6928d67 100644
+--- a/scripts/notification_manager.gd
++++ b/scripts/notification_manager.gd
+@@ -1,6 +1,15 @@
+ extends Node
+ 
+-var notification_scheduler: NotificationScheduler
++## Autoload. Owns the Android notification channel and the recurring drink
++## reminder that runs for the duration of a job.
++##
++## NOTE: the scheduler is built in code here, not placed in a scene, so its
++## signals have to be connected by hand. They used to be editor-wired in
++## notification_tester.tscn; that wiring did not come across, which meant
++## permissions were never requested on a fresh install. It appeared to work on
++## an emulator that had already been granted POST_NOTIFICATIONS by the tester
++## scene, and because _ensure_channel_exists() creates the channel lazily at
++## send time.
+ 
+ @export_category("Notification Channel")
+ @export var channel_id: String = "desert_hydration_quest"
+@@ -10,26 +19,76 @@ var notification_scheduler: NotificationScheduler
+ 
+ @export_category("Notification Content")
+ @export var notification_title: String = "Desert Hydration Quest"
+-@export var notification_text: String = "DRINK"
++@export var notification_text: String = "Time for a drink, traveler."
+ 
++const JOB_REMINDER_ID := 2525
++const SECONDS_PER_MINUTE := 60
++## First reminder fires this long after the job starts.
++const FIRST_REMINDER_DELAY_SEC := 60
+ 
+-var _notification_id: int = 2525
+-var _channel_created: bool = false
+-var delay: int = 10
+-var interval: int = 15
+-var badge: int = 5
++var notification_scheduler: NotificationScheduler
+ 
++var _channel_created := false
++var _initialized := false
++## Set when a job starts before the plugin finished initializing.
++var _pending_interval_min := 0
+ 
+ 
+ func _ready() -> void:
+ 	notification_scheduler = NotificationScheduler.new()
+ 	add_child(notification_scheduler)
++
++	notification_scheduler.initialization_completed.connect(_on_initialization_completed)
++	notification_scheduler.post_notifications_permission_granted.connect(_on_permission_granted)
++	notification_scheduler.post_notifications_permission_denied.connect(_on_permission_denied)
++
+ 	notification_scheduler.initialize()
+-	SignalManager.test_notification.connect(_on_send_button_pressed)
+-	notification_scheduler.cancel(2525) #ensure all previous scheduled are cancelled
+ 
+ 
+-func _on_notification_scheduler_initialization_completed() -> void:
++# --- Public API -----------------------------------------------------
++
++## Start the recurring drink reminder for an active job.
++func start_job_reminders(interval_min: int) -> void:
++	if not _initialized:
++		_pending_interval_min = interval_min
++		return
++	if not _ensure_channel_exists():
++		return
++
++	stop_job_reminders()
++
++	var data := (
++		NotificationData
++		. new()
++		. set_id(JOB_REMINDER_ID)
++		. set_channel_id(channel_id)
++		. set_title(notification_title)
++		. set_content(notification_text)
++		. set_small_icon_name("ic_stat_local_drink")
++		. set_large_icon_name("ic_stat_local_drink")
++		. set_delay(FIRST_REMINDER_DELAY_SEC)
++		. set_interval(interval_min * SECONDS_PER_MINUTE)
++	)
++
++	var result := notification_scheduler.schedule(data)
++	if result != OK:
++		push_warning("Could not schedule drink reminders: %d" % result)
++
++
++## Stop reminders. Called when a job completes or is canceled.
++func stop_job_reminders() -> void:
++	if notification_scheduler:
++		notification_scheduler.cancel(JOB_REMINDER_ID)
++
++
++# --- Plugin lifecycle -----------------------------------------------
++
++func _on_initialization_completed() -> void:
++	_initialized = true
++
++	# Clear anything left scheduled from a previous run of the app.
++	notification_scheduler.cancel(JOB_REMINDER_ID)
++
+ 	if notification_scheduler.has_post_notifications_permission():
+ 		_create_channel()
+ 	else:
+@@ -41,15 +100,23 @@ func _on_notification_scheduler_initialization_completed() -> void:
+ 	if not notification_scheduler.has_schedule_exact_alarm_permission():
+ 		notification_scheduler.request_schedule_exact_alarm_permission()
+ 
+-func _on_notification_scheduler_post_notifications_permission_granted(_permission_name: String) -> void:
++	if _pending_interval_min > 0:
++		var interval := _pending_interval_min
++		_pending_interval_min = 0
++		start_job_reminders(interval)
++
++
++func _on_permission_granted(_permission_name: String) -> void:
+ 	_create_channel()
+ 
+-func _on_notification_scheduler_post_notifications_permission_denied(_permission_name: String) -> void:
+-	#_print_to_screen("%s permission denied" % permission_name)
+-	pass
++
++func _on_permission_denied(_permission_name: String) -> void:
++	# TODO: surface this in-game — without it the whole reminder loop is dead.
++	push_warning("Notification permission denied; drink reminders are unavailable.")
++
+ 
+ func _create_channel() -> void:
+-	var __result = notification_scheduler.create_notification_channel(
++	var result := notification_scheduler.create_notification_channel(
+ 		(
+ 			NotificationChannel
+ 			. new()
+@@ -59,73 +126,13 @@ func _create_channel() -> void:
+ 			. set_importance(channel_importance)
+ 		)
+ 	)
+-
+-	if __result == OK:
+-		_channel_created = true
+-	elif __result == ERR_ALREADY_EXISTS:
+-		_channel_created = true
+-	else:
+-		_channel_created = false
+-		#match __result:
+-			#ERR_UNCONFIGURED:
+-				#_print_to_screen("Can't create channel %s - plugin not initialized!" % channel_id, true)
+-			#ERR_INVALID_DATA:
+-				#_print_to_screen("Can't create channel %s - channel data is invalid!" % channel_id, true)
+-			#_:
+-				#_print_to_screen("Can't create channel %s - unknown error: %d" % [channel_id, __result], true)
+-
++	_channel_created = result == OK or result == ERR_ALREADY_EXISTS
++	if not _channel_created:
++		push_warning("Could not create notification channel '%s': %d" % [channel_id, result])
+ 
+ 
+ func _ensure_channel_exists() -> bool:
+ 	if _channel_created:
+ 		return true
+-
+-	# Try to create the channel
+-	var result = notification_scheduler.create_notification_channel(
+-		(
+-			NotificationChannel
+-			. new()
+-			. set_id(channel_id)
+-			. set_name(channel_name)
+-			. set_description(channel_description)
+-			. set_importance(channel_importance)
+-		)
+-	)
+-
+-	if result == OK or result == ERR_ALREADY_EXISTS:
+-		_channel_created = true
+-		return true
+-	else:
+-		return false
+-
+-
+-
+-
+-func _on_send_button_pressed() -> void:
+-	if not _ensure_channel_exists():
+-		return
+-		
+-	var __notification_data = (
+-		NotificationData
+-		. new()
+-		. set_id(_notification_id)
+-		. set_channel_id(channel_id)
+-		. set_title(notification_title)
+-		. set_small_icon_name("ic_stat_local_drink")
+-		. set_large_icon_name("ic_stat_local_drink")
+-		. set_content(notification_text)
+-		. set_delay(delay)
+-	)
+-	 
+-	__notification_data.set_interval(interval)
+-	
+-	__notification_data.set_badge_count(badge)
+-
+-	__notification_data.set_custom_data(
+-		CustomData.new()
+-		.set_int_property("my_test_int", 14)
+-		.set_string_property("my_test_string", "just testing")
+-	)
+-
+-
+-	var __result = notification_scheduler.schedule(__notification_data)
++	_create_channel()
++	return _channel_created
+diff --git a/scripts/signal_manager.gd b/scripts/signal_manager.gd
+index e7e52b9..edcea4a 100644
+--- a/scripts/signal_manager.gd
++++ b/scripts/signal_manager.gd
+@@ -1,32 +1,52 @@
+ extends Node
+ 
+-signal bottle_size_selected(size: float)
++## Autoload. Cross-scene events only.
++##
++## Rule of thumb: if GameManager can just call the thing directly (it and Ui are
++## both autoloads), do that instead of adding a signal here. Signals earn their
++## place when a scene that may or may not exist needs to react.
+ 
++# --- Water ----------------------------------------------------------
+ 
++## Player picked or created a bottle. [param keep_progress] carries the sips
++## already logged over to the new bottle.
++signal bottle_size_selected(bottle: BottleSize, keep_progress: bool)
+ 
+-signal water_drunk(amount: float)
+-signal oasis_reward_granted(loot: Resource)
++## A sip was taken. [param amount_ml] is always millilitres.
++signal water_drunk(amount_ml: float)
++
++## Emitted on every sip and on refill. Drives the oasis mirage opacity.
++signal bottle_progress_updated(current_drunk_ml: float, volume_ml: float)
++
++## The player refilled at the oasis (i.e. declared the bottle finished).
+ signal bottle_completed
+-signal day_completed(bottles_drunk: int)
+-signal save_to_oasis(character_hydration_tint_change:float)
+ 
+-signal test_notification()
++## Loot paid out for the water banked since the last refill.
++signal oasis_reward_granted(loot: Array[Item])
+ 
+-signal item_crafted(item: Item, count: int)
++## The player's own daily target was reached.
++signal daily_goal_reached(bottles_today: Array[BottleSize])
+ 
++## Intake crossed the safe rate. UI should discourage, not celebrate.
++signal overdrink_warning(limit_ml: float)
++
++# --- Jobs -----------------------------------------------------------
++
++signal job_accepted(job: Job)
++signal job_canceled(job: Job)
++signal job_completed(job: Job)
++
++# --- Items ----------------------------------------------------------
++
++signal item_crafted(item: Item, count: int)
+ signal item_used(item: Item)
+ signal loot_granted(slot_data: SlotData)
+ 
+-signal toggle_inventory()
+-signal toggle_shop()
+-signal toggle_job_board()
+-
+ signal cosmetic_crafted(item: ItemCosmetic)
+ signal cosmetic_equipped(slot_type: ItemCosmetic.SLOT_TYPE, item: ItemCosmetic)
+ 
+-signal job_accepted(job:Job)
+-signal job_canceled(job:Job)
+-signal job_progressed(job: Job)
+-signal job_completed(job: Job)
++# --- UI panels ------------------------------------------------------
+ 
+-signal bottle_progress_updated(current_drunk: float, total_volume: float)
++signal toggle_inventory
++signal toggle_crafting
++signal toggle_job_board
+diff --git a/ui/menus/bottle_selection_menu.gd b/ui/menus/bottle_selection_menu.gd
+index 3c7e9fe..9358943 100644
+--- a/ui/menus/bottle_selection_menu.gd
++++ b/ui/menus/bottle_selection_menu.gd
+@@ -1,40 +1,55 @@
+ extends Control
+ 
++## Onboarding step: name a bottle, give its size, pick a display unit.
++##
++## The spin box value is entered in whatever unit the player selected, and is
++## converted to ml immediately. Nothing downstream ever sees ounces.
++
+ @onready var spin_box: SpinBox = %SpinBox
+ @onready var custom_bottle_btn: TextureButton = %CustomBottleBtn
+ @onready var measurement_option_btn: OptionButton = %MeasurementOptionBtn
+ @onready var player_input: LineEdit = %PlayerInput
+ 
+-##TODO probably rework this scene
+-#During player intro, player is asked to set their bottle size
+-#Form - name bottle, choose bottle size, and measurement enum (bottlesize resource)
+ 
+-#var ml_id:int
+-#var oz_id:int
++## Sensible SpinBox bounds per unit. Without this the box keeps its ml range
++## when the player switches to oz (and vice versa), so "8" can mean 8 ml.
++const RANGE_OZ := Vector2(4, 128)
++const RANGE_ML := Vector2(100, 3000)
++
+ 
+ func _ready() -> void:
+-	#oz_id = measurement_option_btn.get_item_id(0)
+-	#ml_id = measurement_option_btn.get_item_id(1)
+ 	open_menu()
++	_apply_unit_range()
++
++
++## Connect the OptionButton's item_selected signal to this in the scene.
++func _on_measurement_option_btn_item_selected(_index: int) -> void:
++	_apply_unit_range()
++
+ 
+-func open_menu()-> void:
++func _apply_unit_range() -> void:
++	var is_oz := measurement_option_btn.selected == BottleSize.MEASUREMENT.OZ
++	var r := RANGE_OZ if is_oz else RANGE_ML
++	spin_box.min_value = r.x
++	spin_box.max_value = r.y
++	spin_box.step = 1 if is_oz else 50
++	spin_box.value = clampf(spin_box.value, r.x, r.y)
++
++
++func open_menu() -> void:
+ 	Ui.drink_button.visible = false
+ 
++
+ func close_menu() -> void:
+ 	visible = false
+ 	Ui.drink_button.visible = true
+ 
++
+ func _on_custom_bottle_btn_pressed() -> void:
+-	var temp:=BottleSize.new()
+-	temp.measurement = measurement_option_btn.selected as BottleSize.MEASUREMENT
+-	match temp.measurement:
+-		BottleSize.MEASUREMENT.OZ:
+-			temp.total_volume_oz = spin_box.value
+-		BottleSize.MEASUREMENT.ML:
+-			temp.total_volume_ml = spin_box.value
+-	
+-	if player_input.text.is_empty():
+-		player_input.text = "bottle"
+-	temp.label = player_input.text
+-	SignalManager.bottle_size_selected.emit(temp, false)
++	var bottle := BottleSize.new()
++	bottle.measurement = measurement_option_btn.selected as BottleSize.MEASUREMENT
++	bottle.volume_ml = bottle.from_display(spin_box.value)
++	bottle.label = player_input.text if not player_input.text.is_empty() else "bottle"
++
++	SignalManager.bottle_size_selected.emit(bottle, false)
+ 	close_menu()
+diff --git a/ui/menus/job_board_menu.gd b/ui/menus/job_board_menu.gd
+index 73a8485..e6cf67f 100644
+--- a/ui/menus/job_board_menu.gd
++++ b/ui/menus/job_board_menu.gd
+@@ -1,37 +1,40 @@
+ extends Control
+ 
++## The job board. A job is a water goal plus a reminder cadence.
++##
++## Short  = Hunt     - quick outing, ~1 bottle, accelerometer walk for bonus loot
++## Medium = Quest    - the default day out; refills and bottle swaps expected
++## Long   = Delivery - full day, passive, for players who don't want to menu
++
+ const JOB_ENTRY = preload("uid://ccvdky2q0oaox")
+ 
++## Default minutes between drink reminders, overridable per job on the entry.
++const DEFAULT_INTERVAL_MIN := 10
++
+ @export var jobs: Array[Job] = []
++
+ @onready var job_list: VBoxContainer = %JobList
+ 
+-##TODO setup job select menu
+-#Short = Hunt
+-#--quick outing to drink up to 1 water bottle and also run the accelerometer for a walk for bonus loot
+-#--Minigame at end? Does that encourage people to give up on run early?
+-#Medium = Quest
+-#--Regular day outing, can refill or bottle swap
+-#--Most gameplay is goal for Quest
+-#Long = Delivery
+-#--Full day delivery, for players who want to play passively and not menu throughout the day
+ 
+ func _ready() -> void:
+-	pass
++	# This was never called, so the board was always empty.
++	_populate()
++
+ 
+ func _populate() -> void:
+ 	for child in job_list.get_children():
+ 		child.queue_free()
+-	
++
+ 	for job in jobs:
+ 		var entry := JOB_ENTRY.instantiate()
+ 		job_list.add_child(entry)
+ 		entry.set_job(job)
+ 		entry.job_start.connect(_on_job_accepted)
+ 
++
+ func _on_job_accepted(job: Job) -> void:
+ 	SignalManager.job_accepted.emit(job)
+-	#if not GameManager.start_job(job):
+-		#return
++
+ 
+ func _on_close_button_pressed() -> void:
+ 	SignalManager.toggle_job_board.emit()
+diff --git a/ui/menus/player_info_menu.gd b/ui/menus/player_info_menu.gd
+index 110743a..1610e48 100644
+--- a/ui/menus/player_info_menu.gd
++++ b/ui/menus/player_info_menu.gd
+@@ -1,27 +1,31 @@
+ extends Control
+ 
++## Onboarding step: name and weight. Weight feeds the recommended daily goal.
++
++## Rough guideline: about 30 ml of water per kg of body weight per day.
++const ML_PER_KG_PER_DAY := 30.0
+ 
+ @onready var name_input: LineEdit = %NameInput
+ @onready var weight_sb: SpinBox = %WeightSB
+ @onready var weight_option_btn: OptionButton = %WeightOptionBtn
+ 
+ 
+-
+ func _on_name_input_text_changed(new_text: String) -> void:
+ 	GameManager.saved_game.username = new_text
+ 
+ 
+-
+-
+ func _on_weight_sb_value_changed(value: float) -> void:
+ 	GameManager.saved_game.weight = value
++	_update_recommended_goal()
+ 
+ 
++func _on_weight_option_btn_item_selected(index: int) -> void:
++	GameManager.saved_game.weight_is_lb = index == 0
++	_update_recommended_goal()
+ 
+ 
+-func _on_weight_option_btn_item_selected(index: int) -> void:
+-	if index == 0:
+-		GameManager.saved_game.weight_is_oz = true
+-	else:
+-		GameManager.saved_game.weight_is_oz = false
+-	
++## Suggest a daily target from body weight. The player can still override it.
++func _update_recommended_goal() -> void:
++	var save := GameManager.saved_game
++	var kg: float = save.weight * GameManager.KG_PER_LB if save.weight_is_lb else save.weight
++	save.daily_goal_ml = kg * ML_PER_KG_PER_DAY
+diff --git a/ui/menus/shop.gd b/ui/menus/shop.gd
+index a11376e..0a190c7 100644
+--- a/ui/menus/shop.gd
++++ b/ui/menus/shop.gd
+@@ -1,29 +1,7 @@
+ extends PanelContainer
+ 
+-const RECIPE_ENTRY = preload("uid://c6eypit4513fe")
+-
+-@export var recipes: Array[Recipe] = []
+-
+-@onready var recipe_list: VBoxContainer = $MarginContainer/RecipeList
+-
+-func _ready() -> void:
+-	GameManager.player_inventory_data.inventory_updated.connect(_refresh)
+-	_populate()
+-
+-func _populate() -> void:
+-	for recipe in recipes:
+-		var entry = RECIPE_ENTRY.instantiate()
+-		recipe_list.add_child(entry)
+-		entry.set_recipe(recipe)
+-		entry.craft_requested.connect(_on_craft_requested)
+-
+-func _refresh(_inv: InventoryData) -> void:
+-	for entry in recipe_list.get_children():
+-		entry.refresh()
+-
+-func _on_craft_requested(recipe: Recipe) -> void:
+-	var inv := GameManager.PLAYER_INVENTORY
+-	if not inv.consume(recipe):
+-		return
+-	if GameManager.own_cosmetic(recipe.output):
+-		SignalManager.cosmetic_crafted.emit(recipe.output)
++## DEPRECATED - superseded by ui/menus/shop_interface.gd.
++##
++## The original is preserved at .archive/shop.gd (Godot ignores dot-folders).
++## This stub exists only because the file could not be deleted remotely.
++## Delete it from Godot's FileSystem dock when convenient.
+diff --git a/ui/menus/shop_interface.gd b/ui/menus/shop_interface.gd
+index cddf1af..6c59eb5 100644
+--- a/ui/menus/shop_interface.gd
++++ b/ui/menus/shop_interface.gd
+@@ -1,6 +1,13 @@
+ extends Control
+ class_name ShopInterface
+ 
++## The crafter's window. Despite the "shop" filenames this is the CRAFTING UI —
++## it trades materials for recipe output. The material shop (buy stock with
++## currency, rotates daily) is a separate thing that doesn't exist yet.
++##
++## TODO: rename this file and its scene to craft_interface once you're ready to
++## build the real shop, so the two don't collide.
++
+ const RECIPE_ENTRY = preload("uid://c6eypit4513fe")
+ 
+ @export var recipes: Array[Recipe] = []
+@@ -11,36 +18,45 @@ const RECIPE_ENTRY = preload("uid://c6eypit4513fe")
+ 
+ func _ready() -> void:
+ 	GameManager.PLAYER_INVENTORY.inventory_updated.connect(_refresh)
+-	SignalManager.cosmetic_crafted.connect(func(_item): _refresh(null))
++	SignalManager.cosmetic_crafted.connect(_on_cosmetic_crafted)
+ 	_populate()
+ 
++
+ func _populate() -> void:
+ 	for child in recipe_list.get_children():
+ 		child.queue_free()
+-	
++
+ 	for recipe in recipes:
+ 		var entry := RECIPE_ENTRY.instantiate()
+ 		recipe_list.add_child(entry)
+ 		entry.set_recipe(recipe)
+ 		entry.craft_requested.connect(_on_craft_requested)
+ 
+-func _refresh(_inv) -> void:
++
++func _refresh(_inv: InventoryData = null) -> void:
+ 	for entry in recipe_list.get_children():
+ 		entry.refresh()
+ 
++
++func _on_cosmetic_crafted(_item: ItemCosmetic) -> void:
++	_refresh()
++
++
++## The shopkeeper's dialogue lives here, not inside InventoryData — a data
++## resource shouldn't know the shopkeeper exists.
+ func _on_craft_requested(recipe: Recipe) -> void:
+-	if not GameManager.craft(recipe):
+-		return
+-		#shopkeeper_column.say("Your pack's full, traveler.")  # or CANT_AFFORD line as before
+-	#var inv := GameManager.PLAYER_INVENTORY
+-	#if not inv.consume(recipe):
+-		#return
+-	#if GameManager.own_cosmetic(recipe.output):
+-		#SignalManager.cosmetic_crafted.emit(recipe.output)
++	if GameManager.craft(recipe):
++		shopkeeper_column.crafted()
++	elif not GameManager.PLAYER_INVENTORY.can_afford(recipe):
++		shopkeeper_column.come_back_later()
++	else:
++		shopkeeper_column.pack_full()
++
+ 
+ func _on_close_button_pressed() -> void:
+-	SignalManager.toggle_shop.emit()
++	SignalManager.toggle_crafting.emit()
++
+ 
+ func _on_dimmer_gui_input(event: InputEvent) -> void:
+ 	if event is InputEventMouseButton and event.is_pressed():
+-		SignalManager.toggle_shop.emit()
++		SignalManager.toggle_crafting.emit()
+diff --git a/ui/menus/shopkeeper_column.gd b/ui/menus/shopkeeper_column.gd
+index 947b818..7d22ec8 100644
+--- a/ui/menus/shopkeeper_column.gd
++++ b/ui/menus/shopkeeper_column.gd
+@@ -1,6 +1,9 @@
+ extends VBoxContainer
+ class_name ShopWindow
+ 
++## The clerk's portrait and speech bubble. Lines are chosen here; nothing
++## outside the UI layer should be picking dialogue.
++
+ const GREETINGS := [
+ 	"Glad to see ya!",
+ 	"I'll craft for ya!",
+@@ -14,23 +17,30 @@ const CANT_AFFORD_LINES := [
+ 	"Come back with more materials.",
+ 	"Gather more.",
+ ]
++const PACK_FULL_LINES := [
++	"Your pack's full, traveler.",
++	"No room for it. Make some space.",
++]
+ 
+ @onready var bubble_label: Label = %BubbleLabel
+ @onready var shopkeeper_sprite: TextureRect = %ShopkeeperSprite
+ 
+ 
+-func _ready() -> void:
+-	SignalManager.cosmetic_crafted.connect(func(_item): say(CRAFT_LINES.pick_random()))
+-
+ func greet() -> void:
+ 	say(GREETINGS.pick_random())
+ 
+-func come_back_later() -> void:
+-	say(CANT_AFFORD_LINES.pick_random())
+-	
+ 
+ func crafted() -> void:
+ 	say(CRAFT_LINES.pick_random())
+ 
++
++func come_back_later() -> void:
++	say(CANT_AFFORD_LINES.pick_random())
++
++
++func pack_full() -> void:
++	say(PACK_FULL_LINES.pick_random())
++
++
+ func say(line: String) -> void:
+ 	bubble_label.text = line
+diff --git a/ui/report_panel.gd b/ui/report_panel.gd
+index 74f0cdd..083c177 100644
+--- a/ui/report_panel.gd
++++ b/ui/report_panel.gd
+@@ -22,7 +22,7 @@ func _ready() -> void:
+ 	visible = false
+ 	continue_button.pressed.connect(_on_continue_pressed)
+ 
+-func populate(loot_earned: Array) -> void:
++func populate(loot_earned: Array[Item]) -> void:
+ 	for child in item_grid.get_children():
+ 		child.queue_free()
+ 	
+diff --git a/ui/ui.gd b/ui/ui.gd
+index 94c9ded..1bb0f45 100644
+--- a/ui/ui.gd
++++ b/ui/ui.gd
+@@ -32,8 +32,10 @@ func _ready() -> void:
+ 	hot_bar_inventory.swiped_up.connect(_on_hotbar_swiped_up)
+ 	
+ 	shop_interface.hide()
+-	SignalManager.toggle_shop.connect(_toggle_shop)
++	job_board_menu.hide()
++	SignalManager.toggle_crafting.connect(_toggle_crafting)
+ 	SignalManager.toggle_job_board.connect(_toggle_job_board)
++	SignalManager.bottle_progress_updated.connect(_on_bottle_progress)
+ 
+ 
+ func _unhandled_input(event: InputEvent) -> void:
+@@ -47,9 +49,8 @@ func _unhandled_input(event: InputEvent) -> void:
+ 			_check_swipe(event.position)
+ 
+ func _on_drink_button_pressed() -> void:
+-	SignalManager.test_notification.emit()
++	# TODO: emit how long the button was held, and scale the sip estimate by it.
+ 	GameManager.drink()
+-	##later change this to emit how long button pressed
+ 
+ func _check_swipe(end_pos: Vector2) -> void:
+ 	var elapsed := Time.get_ticks_msec() / 1000.0 - _touch_start_time
+@@ -93,7 +94,7 @@ func _slide_out(panel:Control)-> void:
+ 	tween.parallel().tween_property(hot_bar_inventory, "modulate:a", 1.0, SLIDE_TIME)
+ 	tween.tween_callback(panel.hide)
+ 
+-func _toggle_shop() -> void:
++func _toggle_crafting() -> void:
+ 	if shop_interface.visible:
+ 		_slide_out(shop_interface)
+ 	else:
+@@ -110,12 +111,11 @@ func _toggle_job_board() -> void:
+ 		_slide_in(job_board_menu)
+ 
+ 
+-##DEBUG Currently
+-func _update(_total_drunk:float)->void:
+-	#_label.add_text("%s\n\n" % str(_total_drunk))
+-	#_label.scroll_to_line(_label.get_line_count() - 1)
++## TODO: real progress readout. Was a debug text dump; GameManager no longer
++## calls it, so it is connected to bottle_progress_updated instead.
++func _on_bottle_progress(_current_drunk_ml: float, _volume_ml: float) -> void:
+ 	pass
+ 
+ 
+ func _on_settings_button_pressed() -> void:
+-	pass # Replace with function body.
++	pass  # TODO: open the settings menu (volume, haptics, bottle management).

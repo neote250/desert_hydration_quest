@@ -1,0 +1,18 @@
+[gd_scene format=3 uid="uid://dg1hjo7yk4cmb"]
+
+[ext_resource type="Script" uid="uid://bfpcopx7ecg77" path="res://inventory/hot_bar_inventory.gd" id="1_3m7qs"]
+
+[node name="HotBarInventory" type="PanelContainer" unique_id=423768382]
+offset_right = 40.0
+offset_bottom = 40.0
+script = ExtResource("1_3m7qs")
+
+[node name="MarginContainer" type="MarginContainer" parent="." unique_id=1640326624]
+layout_mode = 2
+theme_override_constants/margin_left = 8
+theme_override_constants/margin_top = 8
+theme_override_constants/margin_right = 8
+theme_override_constants/margin_bottom = 8
+
+[node name="HBoxContainer" type="HBoxContainer" parent="MarginContainer" unique_id=1232154877]
+layout_mode = 2

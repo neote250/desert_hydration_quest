@@ -1,0 +1,67 @@
+[gd_scene format=3 uid="uid://dcr4jjiunsd6s"]
+
+[ext_resource type="Script" uid="uid://dfgwt18galpt5" path="res://minigames/scorpion_nest_mg.gd" id="1_r30i0"]
+[ext_resource type="Texture2D" uid="uid://fpt1drrq8i36" path="res://icon.svg" id="2_8dnvo"]
+[ext_resource type="PackedScene" uid="uid://e53t78mmvjl2" path="res://ui/report_panel.tscn" id="3_nttkm"]
+[ext_resource type="Texture2D" uid="uid://d15r37vd3kf6n" path="res://assets/crosshair.png" id="3_uqtgd"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_6v7fx"]
+atlas = ExtResource("3_uqtgd")
+region = Rect2(18.05155, 68.043205, 10.421528, 7.387413)
+
+[node name="ShootTheBirdMinigame" type="Node2D" unique_id=506714641]
+script = ExtResource("1_r30i0")
+monsters_to_resolve = 1
+
+[node name="GameUI" type="CanvasLayer" parent="." unique_id=1695543675]
+
+[node name="VirtualJoystick" type="VirtualJoystick" parent="GameUI" unique_id=569767370]
+anchors_preset = 2
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_left = 388.0
+offset_top = -311.0
+offset_right = 719.0
+grow_vertical = 0
+joystick_size = 211.0
+
+[node name="TouchScreenButton" type="TouchScreenButton" parent="GameUI" unique_id=2088059037]
+position = Vector2(68, 1032)
+texture_normal = ExtResource("2_8dnvo")
+
+[node name="CountdownLabel" type="Label" parent="GameUI" unique_id=237899320]
+visible = false
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -223.0
+offset_right = 223.0
+offset_bottom = 166.0
+grow_horizontal = 2
+
+[node name="StoryLabel" type="Label" parent="GameUI" unique_id=52095452]
+visible = false
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -226.0
+offset_top = -125.0
+offset_right = 226.0
+offset_bottom = 125.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="ReportPanel" parent="GameUI" unique_id=1074223644 instance=ExtResource("3_nttkm")]
+anchors_preset = 8
+
+[node name="Reticle" type="Sprite2D" parent="." unique_id=857142079]
+texture_filter = 1
+position = Vector2(364, 523)
+scale = Vector2(10, 10)
+texture = SubResource("AtlasTexture_6v7fx")
+
+[node name="Monsters" type="Node" parent="." unique_id=598462323]
+
+[connection signal="pressed" from="GameUI/TouchScreenButton" to="." method="_on_touch_screen_button_pressed"]

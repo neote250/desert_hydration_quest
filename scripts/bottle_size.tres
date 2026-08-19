@@ -1,0 +1,6 @@
+[gd_resource type="Resource" script_class="BottleSize" format=3 uid="uid://bkj5ae1fspqbc"]
+
+[ext_resource type="Script" uid="uid://dwwtkpocssqpg" path="res://scripts/bottle_size.gd" id="1_glq0m"]
+
+[resource]
+script = ExtResource("1_glq0m")

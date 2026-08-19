@@ -1,0 +1,49 @@
+[gd_scene format=3 uid="uid://0h004cby31ql"]
+
+[ext_resource type="Script" uid="uid://droy5a2hn3sgx" path="res://screens/onboarding.gd" id="1_i4kc3"]
+[ext_resource type="PackedScene" uid="uid://dovnev6grnhkw" path="res://ui/menus/bottle_selection_menu.tscn" id="2_0345a"]
+[ext_resource type="PackedScene" uid="uid://cyq4j0iym5kg3" path="res://ui/menus/player_info_menu.tscn" id="3_up0hh"]
+
+[node name="Onboarding" type="Control" unique_id=474623284]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_i4kc3")
+
+[node name="CenterContainer" type="CenterContainer" parent="." unique_id=90543251]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="TabContainer" type="TabContainer" parent="CenterContainer" unique_id=172784153]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(700, 825)
+layout_mode = 2
+tab_alignment = 1
+current_tab = 1
+tab_0/title = "Info"
+tab_1/title = "Bottle"
+
+[node name="InfoBar" type="TabBar" parent="CenterContainer/TabContainer" unique_id=747736003]
+visible = false
+layout_mode = 2
+metadata/_tab_index = 0
+metadata/_tab_name = "Info"
+
+[node name="PlayerInfoMenu" parent="CenterContainer/TabContainer/InfoBar" unique_id=920334584 instance=ExtResource("3_up0hh")]
+layout_mode = 1
+
+[node name="BottleBar" type="TabBar" parent="CenterContainer/TabContainer" unique_id=118319351]
+unique_name_in_owner = true
+layout_mode = 2
+metadata/_tab_index = 1
+metadata/_tab_name = "Bottle"
+
+[node name="BottleSelectionMenu" parent="CenterContainer/TabContainer/BottleBar" unique_id=990610051 instance=ExtResource("2_0345a")]
+layout_mode = 1

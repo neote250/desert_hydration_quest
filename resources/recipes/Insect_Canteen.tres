@@ -1,0 +1,46 @@
+[gd_resource type="Resource" script_class="Recipe" format=3 uid="uid://b37rrnscljp62"]
+
+[ext_resource type="Script" uid="uid://o7p26ly8f23w" path="res://resources/items/recipe_ingredient.gd" id="1_nd0lt"]
+[ext_resource type="Resource" uid="uid://dhhjopojir4rj" path="res://resources/items/minerals/Amber.tres" id="2_5eom2"]
+[ext_resource type="Script" uid="uid://b3rpcf1aubf3a" path="res://resources/items/recipe.gd" id="2_6mm46"]
+[ext_resource type="Texture2D" uid="uid://d3qgktmt23j3c" path="res://assets/animal-icons.png" id="2_7qk55"]
+[ext_resource type="Script" uid="uid://2mjnwvb4ltws" path="res://resources/items/item_cosmetic.gd" id="2_huthq"]
+[ext_resource type="Resource" uid="uid://b5m1q640gs7km" path="res://resources/items/monster_parts/Chitin.tres" id="3_ia5b4"]
+[ext_resource type="Resource" uid="uid://ceenf8oxsoejq" path="res://resources/items/monster_parts/ScorpionStinger.tres" id="4_ia5b4"]
+
+[sub_resource type="Resource" id="Resource_huthq"]
+script = ExtResource("1_nd0lt")
+material = ExtResource("2_5eom2")
+count = 5
+metadata/_custom_type_script = "uid://o7p26ly8f23w"
+
+[sub_resource type="Resource" id="Resource_7qk55"]
+script = ExtResource("1_nd0lt")
+material = ExtResource("3_ia5b4")
+count = 5
+metadata/_custom_type_script = "uid://o7p26ly8f23w"
+
+[sub_resource type="Resource" id="Resource_3bh55"]
+script = ExtResource("1_nd0lt")
+material = ExtResource("4_ia5b4")
+metadata/_custom_type_script = "uid://o7p26ly8f23w"
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_7qk55"]
+atlas = ExtResource("2_7qk55")
+region = Rect2(224, 96, 32, 32)
+
+[sub_resource type="Resource" id="Resource_fh0j5"]
+script = ExtResource("2_huthq")
+id = &"InsectCanteen"
+display_name = "Chitin Canteen"
+description = "Bug lovers rejoice!"
+icon = SubResource("AtlasTexture_7qk55")
+rarity = 2
+metadata/_custom_type_script = "uid://2mjnwvb4ltws"
+
+[resource]
+script = ExtResource("2_6mm46")
+output = SubResource("Resource_fh0j5")
+unlock_hint = "Gather chitin"
+ingredients = Array[ExtResource("1_nd0lt")]([SubResource("Resource_huthq"), SubResource("Resource_7qk55"), SubResource("Resource_3bh55")])
+metadata/_custom_type_script = "uid://b3rpcf1aubf3a"

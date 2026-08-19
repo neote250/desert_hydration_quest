@@ -1,0 +1,157 @@
+[gd_scene format=3 uid="uid://vg630pcv8aof"]
+
+[ext_resource type="Script" uid="uid://cxrdyopypfjxo" path="res://ui/ui.gd" id="1_27fn8"]
+[ext_resource type="Texture2D" uid="uid://fpt1drrq8i36" path="res://icon.svg" id="1_fyqef"]
+[ext_resource type="PackedScene" uid="uid://c0gq2ssh0o61d" path="res://inventory/inventory_interface.tscn" id="3_27fn8"]
+[ext_resource type="Texture2D" uid="uid://ohswx1g2ky08" path="res://assets/ic_system_gear_02_128.png" id="3_bi8hs"]
+[ext_resource type="PackedScene" uid="uid://dg1hjo7yk4cmb" path="res://inventory/hot_bar_inventory.tscn" id="3_nltto"]
+[ext_resource type="Script" uid="uid://d0ookackfd045" path="res://ui/player_character.gd" id="5_tf0e0"]
+[ext_resource type="PackedScene" uid="uid://l1lccjofkioa" path="res://ui/menus/shop_interface.tscn" id="6_obcwv"]
+[ext_resource type="Script" uid="uid://b3rpcf1aubf3a" path="res://resources/items/recipe.gd" id="7_pa1oa"]
+[ext_resource type="Resource" uid="uid://b37rrnscljp62" path="res://resources/recipes/Insect_Canteen.tres" id="8_ay4pc"]
+[ext_resource type="Resource" uid="uid://b6ickn63ms7si" path="res://resources/recipes/steel_canteen_skin.tres" id="9_bi8hs"]
+[ext_resource type="PackedScene" uid="uid://dgwol4a6bmn5f" path="res://ui/menus/job_board_menu.tscn" id="10_ay4pc"]
+[ext_resource type="PackedScene" uid="uid://dmmwgeygvcj8e" path="res://ui/menus/settings_menu.tscn" id="12_hrmpd"]
+[ext_resource type="PackedScene" uid="uid://ho0so353k3if" path="res://ui/water_fill_button.tscn" id="13_x7jpl"]
+
+[node name="UI" type="CanvasLayer" unique_id=1788071878]
+script = ExtResource("1_27fn8")
+
+[node name="Control" type="Control" parent="." unique_id=37211410]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="TextureRect" type="TextureRect" parent="Control" unique_id=114207407]
+visible = false
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -64.0
+offset_top = -64.0
+offset_right = 64.0
+offset_bottom = 64.0
+grow_horizontal = 2
+grow_vertical = 2
+texture = ExtResource("1_fyqef")
+
+[node name="RichTextLabel" type="RichTextLabel" parent="Control" unique_id=1783212135]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="DrinkButton" type="Button" parent="Control" unique_id=2086064056]
+visible = false
+layout_mode = 1
+anchors_preset = 3
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -226.0
+offset_top = -343.0
+offset_right = -55.0
+offset_bottom = -223.0
+grow_horizontal = 0
+grow_vertical = 0
+theme_type_variation = &"WaterButton"
+text = "Drink"
+
+[node name="SettingsButton" type="TextureButton" parent="Control" unique_id=630123732]
+layout_mode = 0
+offset_right = 128.0
+offset_bottom = 128.0
+texture_normal = ExtResource("3_bi8hs")
+
+[node name="PlayerCharacter" type="ColorRect" parent="." unique_id=1483702149]
+unique_name_in_owner = true
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -190.0
+offset_top = -401.0
+offset_right = -38.0
+offset_bottom = -181.0
+grow_horizontal = 2
+grow_vertical = 0
+tooltip_text = "Player Character"
+mouse_filter = 1
+color = Color(1.7808378e-06, 0.7764336, 0.39937586, 1)
+script = ExtResource("5_tf0e0")
+
+[node name="RedTint" type="ColorRect" parent="." unique_id=1764726153]
+unique_name_in_owner = true
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -190.0
+offset_top = -398.0
+offset_right = -38.0
+offset_bottom = -178.0
+grow_horizontal = 2
+grow_vertical = 0
+tooltip_text = "Player Character"
+mouse_filter = 1
+color = Color(0.78039217, 0, 0.22352941, 1)
+
+[node name="WaterFillButton" parent="." unique_id=1770175262 instance=ExtResource("13_x7jpl")]
+anchors_preset = 3
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -247.0
+offset_top = -361.0
+offset_right = -76.0
+offset_bottom = -190.0
+grow_horizontal = 0
+grow_vertical = 0
+
+[node name="HotBarInventory" parent="." unique_id=2058549470 instance=ExtResource("3_nltto")]
+unique_name_in_owner = true
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -20.0
+offset_top = -40.0
+offset_right = 20.0
+offset_bottom = 0.0
+grow_horizontal = 2
+grow_vertical = 0
+
+[node name="InventoryInterface" parent="." unique_id=236935295 instance=ExtResource("3_27fn8")]
+visible = false
+
+[node name="ShopInterface" parent="." unique_id=1549214796 instance=ExtResource("6_obcwv")]
+unique_name_in_owner = true
+visible = false
+recipes = Array[ExtResource("7_pa1oa")]([ExtResource("8_ay4pc"), ExtResource("9_bi8hs")])
+
+[node name="JobBoardMenu" parent="." unique_id=1605081528 instance=ExtResource("10_ay4pc")]
+unique_name_in_owner = true
+visible = false
+
+[node name="SettingsMenu" parent="." unique_id=474380461 instance=ExtResource("12_hrmpd")]
+unique_name_in_owner = true
+visible = false
+
+[connection signal="pressed" from="Control/DrinkButton" to="." method="_on_drink_button_pressed"]
+[connection signal="pressed" from="Control/SettingsButton" to="." method="_on_settings_button_pressed"]
+[connection signal="sip_taken" from="WaterFillButton" to="." method="_on_water_fill_button_sip_taken"]

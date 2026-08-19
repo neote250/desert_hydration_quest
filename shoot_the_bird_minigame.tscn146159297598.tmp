@@ -1,0 +1,45 @@
+[gd_scene format=3 uid="uid://dcr4jjiunsd6s"]
+
+[ext_resource type="Script" uid="uid://dfgwt18galpt5" path="res://shoot_the_bird_minigame.gd" id="1_r30i0"]
+[ext_resource type="Texture2D" uid="uid://fpt1drrq8i36" path="res://icon.svg" id="2_8dnvo"]
+
+[node name="ShootTheBirdMinigame" type="Node2D" unique_id=506714641]
+script = ExtResource("1_r30i0")
+
+[node name="GameUI" type="CanvasLayer" parent="." unique_id=1695543675]
+
+[node name="VirtualJoystick" type="VirtualJoystick" parent="GameUI" unique_id=569767370]
+anchors_preset = 2
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_top = -419.0
+offset_right = 719.0
+grow_vertical = 0
+joystick_mode = 1
+joystick_size = 211.0
+
+[node name="TouchScreenButton" type="TouchScreenButton" parent="GameUI" unique_id=2088059037]
+position = Vector2(68, 1032)
+texture_normal = ExtResource("2_8dnvo")
+
+[node name="Reticle" type="Control" parent="GameUI" unique_id=693246306]
+layout_mode = 3
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -20.0
+offset_top = -20.0
+offset_right = 20.0
+offset_bottom = 20.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="ColorRect" type="ColorRect" parent="GameUI/Reticle" unique_id=441128303]
+layout_mode = 0
+offset_right = 40.0
+offset_bottom = 40.0
+color = Color(0.6156863, 1, 1, 1)
+
+[connection signal="pressed" from="GameUI/TouchScreenButton" to="." method="_on_touch_screen_button_pressed"]

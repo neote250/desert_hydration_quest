@@ -1,0 +1,40 @@
+[gd_resource type="Resource" script_class="Recipe" format=3 uid="uid://b6ickn63ms7si"]
+
+[ext_resource type="Script" uid="uid://o7p26ly8f23w" path="res://resources/items/recipe_ingredient.gd" id="1_n2uvc"]
+[ext_resource type="Script" uid="uid://b3rpcf1aubf3a" path="res://resources/items/recipe.gd" id="2_bgpw4"]
+[ext_resource type="Resource" uid="uid://dhhjopojir4rj" path="res://resources/items/minerals/Amber.tres" id="2_chl0r"]
+[ext_resource type="Script" uid="uid://2mjnwvb4ltws" path="res://resources/items/item_cosmetic.gd" id="2_flqyn"]
+[ext_resource type="Texture2D" uid="uid://c2t418trpjw5n" path="res://assets/ores-minerals-icons.png" id="3_chl0r"]
+[ext_resource type="Resource" uid="uid://dks4yhuc8hfet" path="res://resources/items/minerals/SteelScrap.tres" id="3_hm2my"]
+
+[sub_resource type="Resource" id="Resource_chl0r"]
+script = ExtResource("1_n2uvc")
+material = ExtResource("2_chl0r")
+count = 5
+metadata/_custom_type_script = "uid://o7p26ly8f23w"
+
+[sub_resource type="Resource" id="Resource_yypev"]
+script = ExtResource("1_n2uvc")
+material = ExtResource("3_hm2my")
+count = 5
+metadata/_custom_type_script = "uid://o7p26ly8f23w"
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_hm2my"]
+atlas = ExtResource("3_chl0r")
+region = Rect2(128, 128, 32, 32)
+
+[sub_resource type="Resource" id="Resource_flqyn"]
+script = ExtResource("2_flqyn")
+display_name = "Steel Canteen"
+description = "Shiny and secure!
+For those who like a little extra metal in their water."
+icon = SubResource("AtlasTexture_hm2my")
+rarity = 1
+metadata/_custom_type_script = "uid://2mjnwvb4ltws"
+
+[resource]
+script = ExtResource("2_bgpw4")
+output = SubResource("Resource_flqyn")
+unlock_hint = "Gather steel scrap"
+ingredients = Array[ExtResource("1_n2uvc")]([SubResource("Resource_chl0r"), SubResource("Resource_yypev")])
+metadata/_custom_type_script = "uid://b3rpcf1aubf3a"

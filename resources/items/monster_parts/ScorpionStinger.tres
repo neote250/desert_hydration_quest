@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="ItemMaterial" format=3 uid="uid://ceenf8oxsoejq"]
+
+[ext_resource type="Texture2D" uid="uid://bru7riq3icje0" path="res://assets/monster-parts-icons.png" id="1_3do8o"]
+[ext_resource type="Script" uid="uid://hm8iegvith6b" path="res://resources/items/item_material.gd" id="2_3do8o"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_x2wxj"]
+atlas = ExtResource("1_3do8o")
+region = Rect2(32, 192, 32, 32)
+
+[resource]
+script = ExtResource("2_3do8o")
+id = &"ScStinger"
+display_name = "Scorpion Stinger"
+icon = SubResource("AtlasTexture_x2wxj")
+rarity = 1
+metadata/_custom_type_script = "uid://cmondildki2yk"

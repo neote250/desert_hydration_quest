@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="ItemMaterial" format=3 uid="uid://b5m1q640gs7km"]
+
+[ext_resource type="Script" uid="uid://hm8iegvith6b" path="res://resources/items/item_material.gd" id="1_ndm8b"]
+[ext_resource type="Texture2D" uid="uid://bru7riq3icje0" path="res://assets/monster-parts-icons.png" id="1_ywbw0"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_ywbw0"]
+atlas = ExtResource("1_ywbw0")
+region = Rect2(224, 192, 32, 32)
+
+[resource]
+script = ExtResource("1_ndm8b")
+id = &"Chitin"
+display_name = "Chitin"
+description = "Scraps of insect chitin"
+icon = SubResource("AtlasTexture_ywbw0")
+metadata/_custom_type_script = "uid://hm8iegvith6b"

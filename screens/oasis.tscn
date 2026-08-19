@@ -1,0 +1,48 @@
+[gd_scene format=3 uid="uid://c2ub8hk4lqm8m"]
+
+[ext_resource type="Script" uid="uid://cvl5ljpuc0arg" path="res://screens/oasis.gd" id="1_7jnfd"]
+[ext_resource type="PackedScene" uid="uid://e53t78mmvjl2" path="res://ui/report_panel.tscn" id="2_b0myj"]
+
+[sub_resource type="CompressedTexture2D" id="CompressedTexture2D_7ieyg"]
+load_path = "res://.godot/imported/weather-icons.png-8b6a93ccfab24b6c252701cb3c898b57.ctex"
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_3bh55"]
+atlas = SubResource("CompressedTexture2D_7ieyg")
+region = Rect2(0, 224, 32, 32)
+
+[node name="Oasis" type="Control" unique_id=1913601744]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_7jnfd")
+
+[node name="PanelContainer" type="PanelContainer" parent="." unique_id=1920718556]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="OasisPoolButton" type="TextureButton" parent="PanelContainer" unique_id=735409703]
+custom_minimum_size = Vector2(100, 100)
+layout_mode = 2
+size_flags_horizontal = 4
+size_flags_vertical = 4
+texture_normal = SubResource("AtlasTexture_3bh55")
+stretch_mode = 5
+
+[node name="ReportPanel" parent="." unique_id=1074223644 instance=ExtResource("2_b0myj")]
+unique_name_in_owner = true
+visible = false
+layout_mode = 1
+anchors_preset = 8
+offset_left = -156.5
+offset_top = -76.5
+offset_right = 156.5
+offset_bottom = 76.5
+
+[connection signal="pressed" from="PanelContainer/OasisPoolButton" to="." method="_on_oasis_pool_button_pressed"]

@@ -1,0 +1,73 @@
+[gd_scene format=3 uid="uid://ccvdky2q0oaox"]
+
+[ext_resource type="Script" uid="uid://ba6g7j6m4f3fj" path="res://resources/jobs/job_entry.gd" id="1_htncj"]
+
+[node name="JobEntry" type="PanelContainer" unique_id=322271297]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_htncj")
+
+[node name="MarginContainer" type="MarginContainer" parent="." unique_id=1298295377]
+layout_mode = 2
+
+[node name="VBoxContainer" type="VBoxContainer" parent="MarginContainer" unique_id=1887575413]
+layout_mode = 2
+
+[node name="TopRow" type="HBoxContainer" parent="MarginContainer/VBoxContainer" unique_id=1933452991]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="RewardIcon" type="TextureRect" parent="MarginContainer/VBoxContainer/TopRow" unique_id=1700597342]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(56, 56)
+layout_mode = 2
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Labels" type="VBoxContainer" parent="MarginContainer/VBoxContainer/TopRow" unique_id=158506834]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="JobNameLabel" type="Label" parent="MarginContainer/VBoxContainer/TopRow/Labels" unique_id=221366873]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_font_sizes/font_size = 20
+text = "default"
+
+[node name="JobTypeLabel" type="Label" parent="MarginContainer/VBoxContainer/TopRow/Labels" unique_id=341588918]
+unique_name_in_owner = true
+layout_mode = 2
+
+[node name="AcceptButton" type="Button" parent="MarginContainer/VBoxContainer/TopRow" unique_id=1603313988]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(96, 48)
+layout_mode = 2
+size_flags_vertical = 4
+theme_override_font_sizes/font_size = 20
+text = "Accept"
+
+[node name="DescriptionRow" type="HBoxContainer" parent="MarginContainer/VBoxContainer" unique_id=1288683677]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="JobDescription" type="RichTextLabel" parent="MarginContainer/VBoxContainer/DescriptionRow" unique_id=1114500099]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(360, 60)
+layout_mode = 2
+fit_content = true
+
+[node name="JobSpinBox" type="SpinBox" parent="MarginContainer/VBoxContainer/DescriptionRow" unique_id=860205694]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_vertical = 4
+min_value = 5.0
+max_value = 60.0
+step = 5.0
+value = 5.0
+
+[connection signal="pressed" from="MarginContainer/VBoxContainer/TopRow/AcceptButton" to="." method="_on_accept_button_pressed"]

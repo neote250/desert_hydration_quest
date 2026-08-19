@@ -1,0 +1,12 @@
+[gd_scene format=3 uid="uid://ju7k66vphm8"]
+
+[ext_resource type="Script" uid="uid://ccrptrsyqbi3h" path="res://minigames/monster.gd" id="1_s3gyj"]
+[ext_resource type="Texture2D" uid="uid://fpt1drrq8i36" path="res://icon.svg" id="2_mrqeg"]
+
+[node name="Monster" type="Node2D" unique_id=1277363277]
+script = ExtResource("1_s3gyj")
+
+[node name="Sprite2D" type="Sprite2D" parent="." unique_id=1611834415]
+texture = ExtResource("2_mrqeg")
+
+[node name="AnimationPlayer" type="AnimationPlayer" parent="." unique_id=1279547334]

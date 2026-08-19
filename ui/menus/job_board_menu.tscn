@@ -1,0 +1,101 @@
+[gd_scene format=3 uid="uid://dgwol4a6bmn5f"]
+
+[ext_resource type="Script" uid="uid://dxeouj8dxnwac" path="res://ui/menus/job_board_menu.gd" id="1_73eox"]
+[ext_resource type="Script" uid="uid://lpo0i6335001" path="res://resources/jobs/job.gd" id="2_n6o4v"]
+[ext_resource type="Resource" uid="uid://ig2u31hqo2kw" path="res://resources/jobs/GatherCactusApples.tres" id="3_2pea5"]
+[ext_resource type="Resource" uid="uid://ceenf8oxsoejq" path="res://resources/items/monster_parts/ScorpionStinger.tres" id="4_2pea5"]
+
+[sub_resource type="Resource" id="Resource_htncj"]
+script = ExtResource("2_n6o4v")
+name = "test"
+job_type = 0
+description = "Stab something!"
+water_goal_ml = 25.0
+reward = ExtResource("4_2pea5")
+metadata/_custom_type_script = "uid://lpo0i6335001"
+
+[node name="JobBoardMenu" type="Control" unique_id=1605081528]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_73eox")
+jobs = Array[ExtResource("2_n6o4v")]([ExtResource("3_2pea5"), SubResource("Resource_htncj")])
+
+[node name="Dimmer" type="ColorRect" parent="." unique_id=1004785383]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0, 0, 0, 0.3137255)
+
+[node name="ShopPanel" type="PanelContainer" parent="." unique_id=810069161]
+custom_minimum_size = Vector2(0, 560)
+layout_mode = 1
+anchors_preset = 12
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = -560.0
+grow_horizontal = 2
+grow_vertical = 0
+
+[node name="MarginContainer" type="MarginContainer" parent="ShopPanel" unique_id=984074756]
+layout_mode = 2
+theme_override_constants/margin_left = 12
+theme_override_constants/margin_top = 12
+theme_override_constants/margin_right = 12
+theme_override_constants/margin_bottom = 12
+
+[node name="HBoxContainer" type="HBoxContainer" parent="ShopPanel/MarginContainer" unique_id=37555311]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="LeftColumn" type="VBoxContainer" parent="ShopPanel/MarginContainer/HBoxContainer" unique_id=1357634171]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_stretch_ratio = 1.3
+
+[node name="Header" type="HBoxContainer" parent="ShopPanel/MarginContainer/HBoxContainer/LeftColumn" unique_id=1530785433]
+layout_mode = 2
+
+[node name="JobTitleLabel" type="Label" parent="ShopPanel/MarginContainer/HBoxContainer/LeftColumn/Header" unique_id=1128641064]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_stretch_ratio = 0.5
+theme_type_variation = &"HeaderLabel"
+text = " Jobs"
+
+[node name="Spacer" type="Control" parent="ShopPanel/MarginContainer/HBoxContainer/LeftColumn/Header" unique_id=564221898]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_stretch_ratio = 0.25
+
+[node name="CloseButton" type="Button" parent="ShopPanel/MarginContainer/HBoxContainer/LeftColumn/Header" unique_id=887658967]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_stretch_ratio = 0.25
+theme_type_variation = &"IconButton"
+text = "X"
+
+[node name="HSeparator" type="HSeparator" parent="ShopPanel/MarginContainer/HBoxContainer/LeftColumn" unique_id=1533552330]
+layout_mode = 2
+
+[node name="JobScrollContainer" type="ScrollContainer" parent="ShopPanel/MarginContainer/HBoxContainer/LeftColumn" unique_id=1983502105]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="JobList" type="VBoxContainer" parent="ShopPanel/MarginContainer/HBoxContainer/LeftColumn/JobScrollContainer" unique_id=1202501764]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="VSeparator" type="VSeparator" parent="ShopPanel/MarginContainer/HBoxContainer" unique_id=423211033]
+layout_mode = 2
+
+[connection signal="gui_input" from="Dimmer" to="." method="_on_dimmer_gui_input"]
+[connection signal="pressed" from="ShopPanel/MarginContainer/HBoxContainer/LeftColumn/Header/CloseButton" to="." method="_on_close_button_pressed"]
